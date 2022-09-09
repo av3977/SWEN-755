@@ -1,5 +1,7 @@
 package rit.swen.architecture.controller;
 
+import rit.swen.architecture.monitor.FaultMonitor;
+
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -13,6 +15,10 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     private static final String REGISTRY_HOST = "localhost";
     private static long previousHeartBeatTimeStamp;
     private static int currentCoordinateStep;
+
+    public static long getPreviousHeartBeatTimeStamp() {
+        return previousHeartBeatTimeStamp;
+    }
 
     public static int getCurrentCoordinateStep() {
         return currentCoordinateStep;
@@ -54,7 +60,7 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
             }
             if (!isAlive()) {
                 System.out.println("Receiver: Hearbeat interval exceeded - Localization Component failed - View log for details");
-//                FaultMonitor.handleFault("Localization", this);
+                FaultMonitor.handleFault("Localization", this);
             }
         }
     }
@@ -63,5 +69,15 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
         long interval = System.currentTimeMillis() - previousHeartBeatTimeStamp;
         int error = 100; //100ms error tolerable
         return interval <= (MONITORING_INTERVAL + error);
+    }
+
+    public static void main(String [] args) throws RemoteException {
+        RoadStatusReceiver receiver = new RoadStatusReceiver();
+        receiver.initializeReceiver();
+        try{
+            receiver.monitorLocalizationModule();
+        }catch(Exception ex){
+            System.out.println("Vehicle control - receiver exception  - " + ex.getMessage());
+        }
     }
 }

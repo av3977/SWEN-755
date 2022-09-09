@@ -1,5 +1,6 @@
 package rit.swen.architecture.detectors;
 
+import rit.swen.architecture.controller.IController;
 import rit.swen.architecture.road.LocationStep;
 import rit.swen.architecture.road.RoadType;
 
@@ -17,12 +18,15 @@ public class ObstacleDetector {
     private final int HEARTBEAT_INTERVAL = 2000;
     private Registry registry;
 
+    private IController controller;
     public void initialize() throws IOException, NotBoundException {
 
         /**
          * render RMI registry.
          */
         registry = LocateRegistry.getRegistry();
+        controller = (IController) registry.lookup("ReceiverInterface");
+
     }
 
     /**
@@ -35,6 +39,7 @@ public class ObstacleDetector {
         while (true) {
             try {
                 long currentTime = Calendar.getInstance().getTime().getTime();
+                current_location = getStep(current_location.getCoordinateStep());
                 System.out.println("Detector: I am alive at: " + currentTime);
                 /*wait for 2 seconds before sending the next heart beat signal*/
                 Thread.sleep(HEARTBEAT_INTERVAL);
@@ -65,5 +70,26 @@ public class ObstacleDetector {
                 break;
         }
         return type;
+    }
+
+
+    public static void main(String [] args){
+        int initiallocation;
+        if(args.length == 0 ){
+            initiallocation = 0;
+        }
+        else{
+            initiallocation = Integer.valueOf(args[0]);
+        }
+        ObstacleDetector sender = new ObstacleDetector();
+        try{
+            sender.initialize();
+            Thread.sleep(2000);
+            sender.sendHeartBeat(initiallocation);
+
+        }catch(NotBoundException | IOException | InterruptedException ex){
+            ex.printStackTrace();
+        }
+        System.out.println("sender initialized");
     }
 }
