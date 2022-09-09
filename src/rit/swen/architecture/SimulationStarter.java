@@ -18,14 +18,24 @@ public class SimulationStarter {
 
 
             Thread.sleep(1000);
-            System.out.println("Starting receiver");
+            System.out.println("Starting receiver controller");
+            String SOURCE_CLASS_PREFIX = helper + FILE_SEPARATOR + "out" + FILE_SEPARATOR + "production" + FILE_SEPARATOR + "assignment-1"
+                    + FILE_SEPARATOR + SOURCE_PACKAGE_PREFIX + FILE_SEPARATOR;
+
             ProcessBuilder receiver_builder = new ProcessBuilder("java" , "-cp",
-                    helper + FILE_SEPARATOR + "out"+ FILE_SEPARATOR + "production" + FILE_SEPARATOR +"assignment-1"
-                            + FILE_SEPARATOR + SOURCE_PACKAGE_PREFIX + FILE_SEPARATOR,
+                    SOURCE_CLASS_PREFIX,
                     "contoller.RoadStatusReceiver");
+
             receiver_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             Process vehicleControlModule = receiver_builder.start();
             Thread.sleep(1000);
+
+            System.out.println("Starting detector and it's sender");
+            ProcessBuilder sender_builder = new ProcessBuilder("java" , "-cp",
+                    SOURCE_CLASS_PREFIX,
+                    "detectors.ObstacleDetector");
+            sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
