@@ -3,6 +3,7 @@ package rit.swen.architecture.detectors;
 import rit.swen.architecture.controller.IController;
 import rit.swen.architecture.controller.RoadStatusReceiver;
 import rit.swen.architecture.road.LocationStep;
+import rit.swen.architecture.road.Road;
 import rit.swen.architecture.road.RoadType;
 
 import java.io.IOException;
@@ -28,11 +29,26 @@ public class ObstacleDetector implements Runnable{
     private IController receiverStubProgram;
     private static boolean DETECTOR_FAILED;
     public void initialize() throws IOException, NotBoundException {
-//        DETECTOR_FAILED = false;
-        registry = LocateRegistry.getRegistry();
+        DETECTOR_FAILED = false;
+        registry = LocateRegistry.getRegistry(1098);
         receiverStubProgram = (IController) registry.lookup("IController");
     }
 
+    public void sendMainHeatBeat(int location) {
+        System.out.println("Inside Sender's sendMainHeatBeat().." + RoadStatusReceiver.senderLiveQueue);
+        while (true) {
+            try {
+                long currentTime = Calendar.getInstance().getTime().getTime();
+                RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
+                System.out.println("Detector (Sender): I am alive on step: " + (CURRENT_STEP++) + " at: " + currentTime);
+                /* wait for 2 seconds before sending the next heart beat signal */
+                Thread.sleep(HEARTBEAT_INTERVAL);
+            } catch (InterruptedException exception) {
+                System.out.println("Exception while reporting road status: " + exception.getMessage());
+            }
+        }
+
+    }
     /**
      * Send road report
      * @param location
@@ -52,19 +68,21 @@ public class ObstacleDetector implements Runnable{
                  */
 
                 RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
-                System.out.println("Detector (Sender): I am alive on step: " + (CURRENT_STEP++) + " at: " + currentTime);
+                System.out.println("Detector (Sender): I am alive on step: " + CURRENT_STEP + " on " + (Road.roadAhead[CURRENT_STEP]));
+
                 /*wait for 2 seconds before sending the next heart beat signal*/
                 if (CURRENT_STEP >= 6) {
                     DETECTOR_FAILED = true;
                 }
 
                 if (!DETECTOR_FAILED) {
-                    senderLiveQueue.put(true);
+                    senderLiveQueue.put(CURRENT_STEP);
                 } else {
                     senderLiveQueue.put(false);
                     System.out.println("EXITING SENDER..");
                     break;
                 }
+                ++CURRENT_STEP;
                 Thread.sleep(HEARTBEAT_INTERVAL);
             } catch (InterruptedException exception) {
                 System.out.println("Exception while reporting road status: " + exception.getMessage());
@@ -110,7 +128,7 @@ public class ObstacleDetector implements Runnable{
         try{
             sender.initialize();
             Thread.sleep(2000);
-            sender.sendHeartBeat(initiallocation);
+            sender.sendMainHeatBeat(initiallocation);
         }catch(NotBoundException | IOException | InterruptedException ex){
             System.out.println("Exception message: " + ex.getMessage());
             ex.printStackTrace();

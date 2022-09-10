@@ -10,6 +10,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 
 public class RoadStatusReceiver extends UnicastRemoteObject implements IController, Runnable {
 
@@ -17,11 +18,15 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     private static final String REGISTRY_HOST = "localhost";
     public static long previousHeartBeatTimeStamp;
     private static int currentCoordinateStep;
-    static BlockingQueue senderLiveQueue;
+    public static BlockingQueue senderLiveQueue;
     public RoadStatusReceiver(BlockingQueue queue) throws RemoteException {
         super();
         senderLiveQueue = queue;
     }
+
+    protected RoadStatusReceiver() throws RemoteException {
+    }
+
     public static long getPreviousHeartBeatTimeStamp() {
         return previousHeartBeatTimeStamp;
     }
@@ -30,7 +35,8 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
         return currentCoordinateStep;
     }
 
-    protected RoadStatusReceiver() throws RemoteException {
+    public static BlockingQueue getSenderLiveQueue() {
+        return senderLiveQueue;
     }
 
     @Override
@@ -39,7 +45,7 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
         Registry registry;
         try {
             RoadStatusReceiver roadStatusReceiver = new RoadStatusReceiver();
-            registry = LocateRegistry.getRegistry(REGISTRY_HOST);
+            registry = LocateRegistry.createRegistry(1098);
             registry.rebind("IController", roadStatusReceiver);
         } catch (Exception e) {
             System.out.println("Receiver: Exception : " + e.getMessage());
@@ -52,8 +58,8 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
         this.currentCoordinateStep = coordinateStep;
         previousHeartBeatTimeStamp = System.currentTimeMillis();
         final String currentTimeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-//        System.out.println("Central Controller: current coordinate step: " + coordinateStep);
-//        System.out.println("Central Controller: Received heartbeat signal at : " + currentTimeStamp);
+        System.out.println("Central Controller: current coordinate step: " + coordinateStep);
+        System.out.println("Central Controller: Received heartbeat signal at : " + currentTimeStamp);
     }
 
     @Override
@@ -65,7 +71,6 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
                 System.out.println(e.getMessage());
             }
 
-            System.out.println("Receiver Monitoring failure....");
             System.out.println("Sender is alive [RS]: " + senderLiveQueue);
             try {
                 if (!((boolean) senderLiveQueue.take())) {
@@ -74,30 +79,13 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
                     System.out.println("Receiver: Hearbeat interval exceeded - Localization Component failed - View log for details");
                     MonitoringSystem.handleFault("Localization", this);
                 }
-            }catch (Exception e) {
-
+            } catch (ClassCastException e) {
+                continue;
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
     }
-
-    private boolean isSenderIsAlive(){
-//        long interval = System.currentTimeMillis() - previousHeartBeatTimeStamp;
-//        int error = 100; //100ms error tolerable
-//        return interval <= (MONITORING_INTERVAL + error);
-        // sender is alive
-        return true;
-    }
-
-//    public static void main(String [] args) throws RemoteException {
-//        RoadStatusReceiver receiver = new RoadStatusReceiver();
-//        receiver.initializeReceiver();
-//        try{
-//            receiver.monitorDetectorModule();
-//        }catch(Exception ex){
-//            System.out.println("Vehicle control - receiver exception  - " + ex.getMessage());
-//        }
-//    }
-
     @Override
     public void run() {
         try{

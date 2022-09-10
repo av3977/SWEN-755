@@ -10,10 +10,9 @@ public class Road {
     public  static RoadType[] getRoadAhead() {
         return roadAhead;
     }
+    public Road(){}
 
-    public Road(){ }
-
-    private static final int UPPER_BOUND = 20;
+    private static final int UPPER_BOUND = 10;
     public static void buildRoad() {
         roadAhead = new RoadType[UPPER_BOUND];
 

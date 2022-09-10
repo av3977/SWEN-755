@@ -19,31 +19,23 @@ public class BackupObstacleDetector {
     public static int CURRENT_STEP = 0;
     private IController receiverStubProgram;
     public void initialize() throws IOException, NotBoundException {
-
-        /*get access to rmi registry once started*/
-        registry = LocateRegistry.getRegistry();
+        registry = LocateRegistry.getRegistry(1098);
         receiverStubProgram = (IController) registry.lookup("IController");
     }
 
     public void sendHeartBeat(int location) throws IOException{
         LocationStep current_location = new LocationStep(toRoadType(location), Calendar.getInstance().getTime().getSeconds());
-
         while(true){
             try {
-                /*something that this highly available module does here, may crash*/
-                int current_time = Calendar.getInstance().getTime().getSeconds();
-                current_location = getStep(current_location.getCoordinateStep());
-
-                /*report status, by sending a heartbeat signal to monitoring module*/
+                // read status after sending a heartbeat signal.
                 receiverStubProgram.readStatus(current_location.getCoordinateStep());
                 long currentTime = Calendar.getInstance().getTime().getTime();
 
-                System.out.println("Detector (BackupSender): I am alive on step: " + (location++) + " at: " + currentTime);
+                System.out.println("Detector (BackupSender): I am alive on step: " + (location) + " at: " + currentTime);
+                RoadStatusReceiver.senderLiveQueue.put(location++);
 
-                /*wait for 2 seconds before sending the next heart beat signal*/
+                // wait for 2000ms before sending next heartbeat signal.
                 Thread.sleep(HEARTBEAT_INTERVAL);
-
-                /*Deliberately not catching the Arithmetic Exception - / by 0*/
             }catch(InterruptedException | RemoteException ex){
                 System.out.println("BackupSender exception: " + ex.getMessage());
             }

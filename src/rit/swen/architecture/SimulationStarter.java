@@ -2,6 +2,8 @@ package rit.swen.architecture;
 
 import rit.swen.architecture.controller.RoadStatusReceiver;
 import rit.swen.architecture.detectors.ObstacleDetector;
+import rit.swen.architecture.road.Road;
+import rit.swen.architecture.road.RoadType;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -19,33 +21,26 @@ public class SimulationStarter {
         queue = new LinkedBlockingQueue();
     }
     public static void main(String[] args) throws RemoteException {
+        System.out.println("Hello, starting simulation..! ");
         SimulationStarter starter = new SimulationStarter();
         File currentDirFile = new File("");
         String helper = currentDirFile.getAbsolutePath();
         ObstacleDetector obstacleDetector  = new ObstacleDetector(starter.queue);
         RoadStatusReceiver roadStatusReceiver  = new RoadStatusReceiver(starter.queue);
         String FILE_SEPARATOR = File.separator;
-        String SOURCE_CLASS_PREFIX = helper + FILE_SEPARATOR + "out" + FILE_SEPARATOR + "production"
-                + FILE_SEPARATOR + "assignment-1";
-
-        new Thread(roadStatusReceiver).start();
-//        new Thread(obstacleDetector).start();
 
         try {
-//            ProcessBuilder pb = new ProcessBuilder("rmiregistry");
-//            pb.directory(new File("." + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
-//                    + FILE_SEPARATOR +"assignment-1" + FILE_SEPARATOR + "rit" + FILE_SEPARATOR + "swen"
-//                    + FILE_SEPARATOR + "architecture" ));
-//            pb.start();
-//            Thread.sleep(1000);
+            ProcessBuilder pb = new ProcessBuilder("rmiregistry");
+            pb.directory(new File("." + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
+                    + FILE_SEPARATOR +"assignment-1" + FILE_SEPARATOR + "rit" + FILE_SEPARATOR + "swen"
+                    + FILE_SEPARATOR + "architecture" ));
+            pb.start();
+            Road.buildRoad();
+            Thread.sleep(1000);
 
-//            System.out.println("Starting to build road...");
-//            ProcessBuilder road_builder = new ProcessBuilder("java" , "-cp",
-//                    helper + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
-//                            + FILE_SEPARATOR +"assignment-1", "rit.swen.architecture.road.Road");
-//            road_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-//            Process roadBuilding = road_builder.start();
-//            System.out.println("Built road successfully..");
+            new Thread(roadStatusReceiver).start();
+            new Thread(obstacleDetector).start();
+
 //            roadBuilding.destroy();
 //
 //

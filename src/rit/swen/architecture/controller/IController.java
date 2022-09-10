@@ -5,7 +5,7 @@ import java.rmi.RemoteException;
 
 public interface IController extends Remote {
     /**
-     * setup the controller to receive data from detector senders.
+     * set up the controller to receive data from detector senders.
      */
     void initializeReceiver() throws RemoteException;
 
