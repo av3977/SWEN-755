@@ -14,7 +14,7 @@ import java.text.DecimalFormat;
 import java.util.Calendar;
 
 public class BackupObstacleDetector {
-    private final int HEARTBEAT_INTERVAL = 2000;
+    private final int HEARTBEAT_INTERVAL = 1500;
     private Registry registry;
     public static int CURRENT_STEP = 0;
     private IController receiverStubProgram;
@@ -34,15 +34,11 @@ public class BackupObstacleDetector {
                 int current_time = Calendar.getInstance().getTime().getSeconds();
                 current_location = getStep(current_location.getCoordinateStep());
 
-                        /* Justifying why we perform this division
-                        we track the ratio of the time in seconds to ensure that location is retrieved within a second */
-                double test = current_time/current_location.getTime();
-
                 /*report status, by sending a heartbeat signal to monitoring module*/
                 receiverStubProgram.readStatus(current_location.getCoordinateStep());
                 long currentTime = Calendar.getInstance().getTime().getTime();
 
-                System.out.println("Detector (BackupSender): I am alive on step: " + (CURRENT_STEP++) + " at: " + currentTime);
+                System.out.println("Detector (BackupSender): I am alive on step: " + (location++) + " at: " + currentTime);
 
                 /*wait for 2 seconds before sending the next heart beat signal*/
                 Thread.sleep(HEARTBEAT_INTERVAL);
