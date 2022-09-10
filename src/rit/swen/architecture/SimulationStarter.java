@@ -1,9 +1,10 @@
 package rit.swen.architecture;
 
+import rit.swen.architecture.controller.SharedConstants;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public class SimulationStarter {
     public static void main(String[] args) {
@@ -21,12 +22,22 @@ public class SimulationStarter {
             String SOURCE_CLASS_PREFIX = helper + FILE_SEPARATOR + "out" + FILE_SEPARATOR + "production" + FILE_SEPARATOR + "assignment-1"
                     + FILE_SEPARATOR + SOURCE_PACKAGE_PREFIX + FILE_SEPARATOR;
             Thread.sleep(1000);
+
+            System.out.println("Starting to build road...");
+            ProcessBuilder road_builder = new ProcessBuilder("java" , "-cp",
+                    helper + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
+                            + FILE_SEPARATOR +"assignment-1", "rit.swen.architecture.road.Road");
+            road_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            Process roadBuilding = road_builder.start();
+            System.out.println("Built road successfully..");
+            roadBuilding.destroy();
+
+
             System.out.println("Starting receiver controller");
             ProcessBuilder receiver_builder = new ProcessBuilder("java" , "-cp",
                     helper + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
                             + FILE_SEPARATOR + "assignment-1",
                     "rit.swen.architecture.controller.RoadStatusReceiver");
-
             receiver_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             Process vehicleControlModule = receiver_builder.start();
             Thread.sleep(1000);
@@ -34,10 +45,12 @@ public class SimulationStarter {
             System.out.println("Starting detector and it's sender");
             ProcessBuilder sender_builder = new ProcessBuilder("java" , "-cp",
                     helper + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
-                            + FILE_SEPARATOR +"assignment-1", "rit.swen.architecture.detectors.ObstacleDetector");
+                            + FILE_SEPARATOR +"assignment-1",
+                    "rit.swen.architecture.detectors.ObstacleDetector");
             sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            Process detectorSenderModule = sender_builder.start();
+            SharedConstants.senderProcess = detectorSenderModule;
 
-            Process localizationModule = sender_builder.start();
             InputStream errors_receiver = vehicleControlModule.getErrorStream();
             String err_r = "Receiver - ";
             if(vehicleControlModule.getErrorStream().read() !=-1){

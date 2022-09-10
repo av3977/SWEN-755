@@ -17,5 +17,5 @@ public interface IController extends Remote {
     /**
      * audit the health of receiver at each stage, i.e after every second.
      */
-    void monitorLocalizationModule() throws RemoteException;
+    void monitorDetectorModule() throws RemoteException;
 }

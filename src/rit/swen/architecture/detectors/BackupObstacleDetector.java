@@ -16,15 +16,13 @@ import java.util.Calendar;
 public class BackupObstacleDetector {
     private final int HEARTBEAT_INTERVAL = 2000;
     private Registry registry;
-    private IController receiver_stub;
-
+    public static int CURRENT_STEP = 0;
+    private IController receiverStubProgram;
     public void initialize() throws IOException, NotBoundException {
 
         /*get access to rmi registry once started*/
         registry = LocateRegistry.getRegistry();
-
-        /*Lookup registry by name to access the stub - remote object of the monitoring component */
-        receiver_stub = (IController) registry.lookup("IController");
+        receiverStubProgram = (IController) registry.lookup("IController");
     }
 
     public void sendHeartBeat(int location) throws IOException{
@@ -41,14 +39,17 @@ public class BackupObstacleDetector {
                 double test = current_time/current_location.getTime();
 
                 /*report status, by sending a heartbeat signal to monitoring module*/
-                receiver_stub.readStatus(current_location.getCoordinateStep());
-                System.out.println("BackupSender: I am alive.");
+                receiverStubProgram.readStatus(current_location.getCoordinateStep());
+                long currentTime = Calendar.getInstance().getTime().getTime();
+
+                System.out.println("Detector (BackupSender): I am alive on step: " + (CURRENT_STEP++) + " at: " + currentTime);
+
                 /*wait for 2 seconds before sending the next heart beat signal*/
                 Thread.sleep(HEARTBEAT_INTERVAL);
 
                 /*Deliberately not catching the Arithmetic Exception - / by 0*/
             }catch(InterruptedException | RemoteException ex){
-                System.out.println("BackupSender: " + ex.getMessage());
+                System.out.println("BackupSender exception: " + ex.getMessage());
             }
 
         }
@@ -90,6 +91,6 @@ public class BackupObstacleDetector {
         }catch(NotBoundException | IOException | InterruptedException ex){
             ex.printStackTrace();
         }
-        System.out.println("BackupSender initialized");
+        System.out.println("Backup Sender initialized");
     }
 }
