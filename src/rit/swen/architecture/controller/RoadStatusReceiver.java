@@ -1,6 +1,7 @@
 package rit.swen.architecture.controller;
 
 import rit.swen.architecture.SimulationStarter;
+import rit.swen.architecture.detectors.ObstacleDetector;
 import rit.swen.architecture.monitor.MonitoringSystem;
 
 import java.rmi.RemoteException;
@@ -18,6 +19,7 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     private static final String REGISTRY_HOST = "localhost";
     public static long previousHeartBeatTimeStamp;
     private static int currentCoordinateStep;
+    public static int SENDER_LAST_STEP = -1;
     public static BlockingQueue senderLiveQueue;
     public RoadStatusReceiver(BlockingQueue queue) throws RemoteException {
         super();
@@ -71,12 +73,16 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
                 System.out.println(e.getMessage());
             }
 
-            System.out.println("Sender is alive [RS]: " + senderLiveQueue);
+
             try {
-                if (!((boolean) senderLiveQueue.take())) {
+//                if (!((boolean) senderLiveQueue.take())) {
+                System.out.println("Sender report Queue [RS]: " + senderLiveQueue);
+                SENDER_LAST_STEP = (int) senderLiveQueue.take();
+                System.out.println("SENDER TOOK STEP: " + SENDER_LAST_STEP);
+                if (senderLiveQueue.size() == 0 || ObstacleDetector.isDetectorFailed()) {
                     System.out.println("Sender isn't alive anymore...");
                     System.out.println("Time to activate backup sender");
-                    System.out.println("Receiver: Hearbeat interval exceeded - Localization Component failed - View log for details");
+                    System.out.println("Receiver: Heartbeat interval exceeded - Localization Component failed - View log for details");
                     MonitoringSystem.handleFault("Localization", this);
                 }
             } catch (ClassCastException e) {

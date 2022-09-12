@@ -27,6 +27,11 @@ public class ObstacleDetector implements Runnable{
 
     public static int CURRENT_STEP = 0;
     private IController receiverStubProgram;
+
+    public static boolean isDetectorFailed() {
+        return DETECTOR_FAILED;
+    }
+
     private static boolean DETECTOR_FAILED;
     public void initialize() throws IOException, NotBoundException {
         DETECTOR_FAILED = false;
@@ -35,7 +40,7 @@ public class ObstacleDetector implements Runnable{
     }
 
     public void sendMainHeatBeat(int location) {
-        System.out.println("Inside Sender's sendMainHeatBeat().." + RoadStatusReceiver.senderLiveQueue);
+        System.out.println("Inside Sender's sendMainHeatBeat().." + senderLiveQueue);
         while (true) {
             try {
                 long currentTime = Calendar.getInstance().getTime().getTime();
@@ -56,7 +61,6 @@ public class ObstacleDetector implements Runnable{
      */
     public void sendHeartBeat(int location) {
         LocationStep current_location = new LocationStep(toRoadType(location), Calendar.getInstance().getTime().getTime());
-        System.out.println("Inside Sender's sendHeartBeat()..");
         while (true) {
             try {
                 long currentTime = Calendar.getInstance().getTime().getTime();
@@ -66,24 +70,27 @@ public class ObstacleDetector implements Runnable{
                 /**
                  * ToDO: Fix date format.
                  */
-
                 RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
                 System.out.println("Detector (Sender): I am alive on step: " + CURRENT_STEP + " on " + (Road.roadAhead[CURRENT_STEP]));
 
                 /*wait for 2 seconds before sending the next heart beat signal*/
-                if (CURRENT_STEP >= 6) {
+                if (CURRENT_STEP >= Road.getRoadAhead().length) {
                     DETECTOR_FAILED = true;
                 }
 
                 if (!DETECTOR_FAILED) {
                     senderLiveQueue.put(CURRENT_STEP);
                 } else {
-                    senderLiveQueue.put(false);
+                    DETECTOR_FAILED = true;
                     System.out.println("EXITING SENDER..");
-                    break;
+                    return;
                 }
                 ++CURRENT_STEP;
                 Thread.sleep(HEARTBEAT_INTERVAL);
+            } catch (ArrayIndexOutOfBoundsException indexOutOfBoundsException) {
+                System.out.println("-------SENDER FAILURE-------");
+                DETECTOR_FAILED = true;
+                break;
             } catch (InterruptedException exception) {
                 System.out.println("Exception while reporting road status: " + exception.getMessage());
             }
@@ -113,7 +120,9 @@ public class ObstacleDetector implements Runnable{
         return type;
     }
 
-    public ObstacleDetector() {}
+    public ObstacleDetector() {
+
+    }
 
     public static void main(String [] args){
         int initiallocation;
@@ -127,13 +136,13 @@ public class ObstacleDetector implements Runnable{
         ObstacleDetector sender = new ObstacleDetector();
         try{
             sender.initialize();
+            System.out.println("Rebooting sender from location step: "+ initiallocation);
             Thread.sleep(2000);
             sender.sendMainHeatBeat(initiallocation);
         }catch(NotBoundException | IOException | InterruptedException ex){
             System.out.println("Exception message: " + ex.getMessage());
             ex.printStackTrace();
         }
-        System.out.println("sender initialized");
     }
 
     @Override
@@ -144,7 +153,7 @@ public class ObstacleDetector implements Runnable{
             Thread.sleep(2000);
             System.out.println("sender initialized");
             // Run infinitely.
-            sender.sendHeartBeat(0);
+            sender.sendHeartBeat(RoadStatusReceiver.SENDER_LAST_STEP);
         }catch(NotBoundException | IOException | InterruptedException ex){
             System.out.println("Exception message: " + ex.getMessage());
             ex.printStackTrace();

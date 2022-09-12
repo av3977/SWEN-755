@@ -12,31 +12,45 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.text.DecimalFormat;
 import java.util.Calendar;
+import java.util.concurrent.BlockingQueue;
 
-public class BackupObstacleDetector {
-    private final int HEARTBEAT_INTERVAL = 1500;
+public class BackupObstacleDetector implements Runnable{
+    private final int HEARTBEAT_INTERVAL = 2000;
     private Registry registry;
     public static int CURRENT_STEP = 0;
+    private static BlockingQueue senderQueueReference;
     private IController receiverStubProgram;
+
+    public void setStayActivated(boolean stayActivated) {
+        System.out.println("Setting stay Activated: " + stayActivated);
+        this.stayActivated = stayActivated;
+    }
+
+    public boolean isStayActivated() {
+        return stayActivated;
+    }
+
+    boolean stayActivated=true;
+
     public void initialize() throws IOException, NotBoundException {
         registry = LocateRegistry.getRegistry(1098);
         receiverStubProgram = (IController) registry.lookup("IController");
+        senderQueueReference = RoadStatusReceiver.getSenderLiveQueue();
     }
 
     public void sendHeartBeat(int location) throws IOException{
         LocationStep current_location = new LocationStep(toRoadType(location), Calendar.getInstance().getTime().getSeconds());
-        while(true){
+        while(stayActivated){
             try {
+                System.out.println("Stay Active: " + stayActivated);
                 // read status after sending a heartbeat signal.
-                receiverStubProgram.readStatus(current_location.getCoordinateStep());
+//                receiverStubProgram.readStatus(current_location.getCoordinateStep());
                 long currentTime = Calendar.getInstance().getTime().getTime();
 
-                System.out.println("Detector (BackupSender): I am alive on step: " + (location) + " at: " + currentTime);
-                RoadStatusReceiver.senderLiveQueue.put(location++);
-
+                System.out.println("Detector (BackupSender): I am alive on step: " + (location++) + " at: " + currentTime);
                 // wait for 2000ms before sending next heartbeat signal.
                 Thread.sleep(HEARTBEAT_INTERVAL);
-            }catch(InterruptedException | RemoteException ex){
+            }catch(InterruptedException ex){
                 System.out.println("BackupSender exception: " + ex.getMessage());
             }
 
@@ -74,11 +88,24 @@ public class BackupObstacleDetector {
         BackupObstacleDetector backupSender = new BackupObstacleDetector();
         try{
             backupSender.initialize();
-            Thread.sleep(2000);
+            senderQueueReference = ObstacleDetector.senderLiveQueue;
+            System.out.println("Backup Sender initialized");
             backupSender.sendHeartBeat(initiallocation);
-        }catch(NotBoundException | IOException | InterruptedException ex){
+        }catch(NotBoundException | IOException ex){
             ex.printStackTrace();
         }
-        System.out.println("Backup Sender initialized");
+    }
+
+
+    @Override
+    public void run() {
+        try{
+            initialize();
+            senderQueueReference = ObstacleDetector.senderLiveQueue;
+            System.out.println("Backup Sender initialized");
+            sendHeartBeat(RoadStatusReceiver.SENDER_LAST_STEP);
+        }catch(NotBoundException | IOException ex){
+            ex.printStackTrace();
+        }
     }
 }
