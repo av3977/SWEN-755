@@ -2,8 +2,12 @@
     Heartbeat tactic implemetation for autonomous cars
     
     Features:
-    - The VehicleControl system will continuously receive the heartbeat and make decision accordingly. We have considered 
-    the below two obstacles:
-        
-        i) Pothole – slow down the speed by 60%
-        ii) Water – slow down the speed by 30%
+    - Sensors will sense the obstacles(Pothole, water) on the road and update the detetors accordingly
+    
+    - Detector (Heart beat sender) will continously send heart beat to the central controller. In case of any 
+      failure central controller(Heart beat reciever) will activate the Backup Detector
+
+    - Fault Monitor will monitor the heart beat and will reboot the detector in case of any failure sensed by the
+      central controller.
+    
+![img.png](img.png)
