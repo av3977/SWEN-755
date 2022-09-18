@@ -78,8 +78,8 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
 //                if (!((boolean) senderLiveQueue.take())) {
                 System.out.println("Sender report Queue [RS]: " + senderLiveQueue);
                 SENDER_LAST_STEP = (int) senderLiveQueue.take();
-                System.out.println("SENDER TOOK STEP: " + SENDER_LAST_STEP);
                 if (senderLiveQueue.size() == 0 || ObstacleDetector.isDetectorFailed()) {
+
                     System.out.println("Sender isn't alive anymore...");
                     System.out.println("Time to activate backup sender");
                     System.out.println("Receiver: Heartbeat interval exceeded - Localization Component failed - View log for details");

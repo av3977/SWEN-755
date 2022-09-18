@@ -201,3 +201,37 @@ Localization component failed on : 2022-09-12 14-20-12
 Localization component failed on : 2022-09-12 14-21-17
 
 Localization component failed on : 2022-09-12 14-22-29
+
+Localization component failed on : 2022-09-17 21-59-33
+
+Localization component failed on : 2022-09-17 21-59-47
+
+Localization component failed on : 2022-09-17 22-00-01
+
+Localization component failed on : 2022-09-17 22-07-17
+
+Localization component failed on : 2022-09-17 22-07-36
+
+Localization component failed on : 2022-09-17 22-10-02
+
+Localization component failed on : 2022-09-17 22-10-21
+
+Localization component failed on : 2022-09-17 22-14-32
+
+Localization component failed on : 2022-09-17 22-14-44
+
+Localization component failed on : 2022-09-17 22-16-16
+
+Localization component failed on : 2022-09-17 22-16-29
+
+Localization component failed on : 2022-09-17 22-18-37
+
+Localization component failed on : 2022-09-17 22-20-42
+
+Localization component failed on : 2022-09-17 22-23-01
+
+Localization component failed on : 2022-09-17 22-25-28
+
+Localization component failed on : 2022-09-17 22-28-17
+
+Localization component failed on : 2022-09-17 22-29-59

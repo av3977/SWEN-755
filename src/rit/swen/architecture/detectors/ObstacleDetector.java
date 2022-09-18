@@ -26,6 +26,7 @@ public class ObstacleDetector implements Runnable{
     private Registry registry;
 
     public static int CURRENT_STEP = 0;
+    public boolean stayActive = true;
     private IController receiverStubProgram;
 
     public static boolean isDetectorFailed() {
@@ -61,7 +62,7 @@ public class ObstacleDetector implements Runnable{
      */
     public void sendHeartBeat(int location) {
         LocationStep current_location = new LocationStep(toRoadType(location), Calendar.getInstance().getTime().getTime());
-        while (true) {
+        while (stayActive) {
             try {
                 long currentTime = Calendar.getInstance().getTime().getTime();
                 current_location = getStep(current_location.getCoordinateStep());
@@ -82,19 +83,18 @@ public class ObstacleDetector implements Runnable{
                     senderLiveQueue.put(CURRENT_STEP);
                 } else {
                     DETECTOR_FAILED = true;
-                    System.out.println("EXITING SENDER..");
                     return;
                 }
                 ++CURRENT_STEP;
                 Thread.sleep(HEARTBEAT_INTERVAL);
             } catch (ArrayIndexOutOfBoundsException indexOutOfBoundsException) {
-                System.out.println("-------SENDER FAILURE-------");
-                DETECTOR_FAILED = true;
-                break;
+                stayActive = false;
+                this.stop();
             } catch (InterruptedException exception) {
                 System.out.println("Exception while reporting road status: " + exception.getMessage());
             }
         }
+        System.out.println("-------Sender thread stopped-------");
     }
 
     private static LocationStep getStep(int location){
@@ -151,12 +151,16 @@ public class ObstacleDetector implements Runnable{
         try{
             sender.initialize();
             Thread.sleep(2000);
-            System.out.println("sender initialized");
+            System.out.println("sender initialized from thread run method");
             // Run infinitely.
             sender.sendHeartBeat(RoadStatusReceiver.SENDER_LAST_STEP);
         }catch(NotBoundException | IOException | InterruptedException ex){
             System.out.println("Exception message: " + ex.getMessage());
             ex.printStackTrace();
         }
+    }
+
+    public void stop() {
+        this.stayActive = false;
     }
 }

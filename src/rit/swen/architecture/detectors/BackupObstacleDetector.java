@@ -30,7 +30,7 @@ public class BackupObstacleDetector implements Runnable{
         return stayActivated;
     }
 
-    boolean stayActivated=true;
+    boolean stayActivated = true;
 
     public void initialize() throws IOException, NotBoundException {
         registry = LocateRegistry.getRegistry(1098);
@@ -42,7 +42,6 @@ public class BackupObstacleDetector implements Runnable{
         LocationStep current_location = new LocationStep(toRoadType(location), Calendar.getInstance().getTime().getSeconds());
         while(stayActivated){
             try {
-                System.out.println("Stay Active: " + stayActivated);
                 // read status after sending a heartbeat signal.
 //                receiverStubProgram.readStatus(current_location.getCoordinateStep());
                 long currentTime = Calendar.getInstance().getTime().getTime();
@@ -53,8 +52,8 @@ public class BackupObstacleDetector implements Runnable{
             }catch(InterruptedException ex){
                 System.out.println("BackupSender exception: " + ex.getMessage());
             }
-
         }
+        System.out.println("------KILLED BACKUP SENDER------");
     }
 
     private static LocationStep getStep(int location){
@@ -107,5 +106,9 @@ public class BackupObstacleDetector implements Runnable{
         }catch(NotBoundException | IOException ex){
             ex.printStackTrace();
         }
+    }
+
+    public void stop() {
+        this.stayActivated = false;
     }
 }

@@ -65,25 +65,21 @@ public class MonitoringSystem {
 
 
         try {
-            Thread.sleep(10000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         System.out.println("Rebooting sender");
-        ObstacleDetector detector = new ObstacleDetector((new SimulationStarter()).getQueue());
-        new Thread(detector).start();
         ProcessBuilder sender_builder = new ProcessBuilder("java", "-cp",
-                "." + File.separator +"out" + File.separator +"production"
+                helper + File.separator +"out" + File.separator +"production"
                         + File.separator +"assignment-1",
-                "rit.swen.architecture.detectors.ObstacleDetector", String.valueOf(RoadStatusReceiver.senderLiveQueue.peek()));
-        sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                "rit.swen.architecture.detectors.ObstacleDetector", String.valueOf(13));
         try {
-            System.out.println("Backup thread is alive: " + backupObstacleDetector.isStayActivated());
-            backupObstacleDetector.setStayActivated(false);
-            System.out.println("Backup thread is alive: " + backupObstacleDetector.isStayActivated());
-
+            System.out.println("sender_builder.command(): " + sender_builder.command());
+            sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             sender_builder.start();
+            backupObstacleDetector.stop();
 //            backupProcessThread.wait();
 //            backupProcessThread.interrupt();
 
@@ -94,6 +90,5 @@ public class MonitoringSystem {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        System.out.println("Sender reboot successful, shutting down backup detector.");
     }
 }
