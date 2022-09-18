@@ -23,6 +23,7 @@ public class SimulationStarter {
     public static void main(String[] args) throws RemoteException {
         System.out.println("Hello, starting simulation..! ");
         SimulationStarter starter = new SimulationStarter();
+        starter.queue.add(-1); // start car engine.
         File currentDirFile = new File("");
         String helper = currentDirFile.getAbsolutePath();
         ObstacleDetector obstacleDetector  = new ObstacleDetector(starter.queue);

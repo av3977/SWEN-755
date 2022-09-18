@@ -2,6 +2,7 @@ package rit.swen.architecture.monitor;
 
 import rit.swen.architecture.SimulationStarter;
 import rit.swen.architecture.controller.RoadStatusReceiver;
+import rit.swen.architecture.detectors.BackupObstacleDetector;
 import rit.swen.architecture.detectors.ObstacleDetector;
 
 import java.io.File;
@@ -9,6 +10,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ExecutionException;
+
 public class MonitoringSystem {
 
     private String component;
@@ -41,40 +44,51 @@ public class MonitoringSystem {
         }
         System.out.println("Starting BackupSender");
 
-        ProcessBuilder backupsender_builder = new ProcessBuilder("java", "-cp",
-                helper + File.separator + "out"+ File.separator +"production" + File.separator +"assignment-1"
-                        + File.separator,
-                "rit.swen.architecture.detectors.BackupObstacleDetector", String.valueOf(ObstacleDetector.CURRENT_STEP));
+//        ProcessBuilder backupsender_builder = new ProcessBuilder("java", "-cp",
+//                helper + File.separator + "out"+ File.separator +"production" + File.separator +"assignment-1"
+//                        + File.separator,
+//                "rit.swen.architecture.detectors.BackupObstacleDetector", String.valueOf(RoadStatusReceiver.senderLiveQueue.peek()));
+//        backupsender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         System.out.println("Built backup sender..");
 
         Process backupSenderProcess = null;
-        backupsender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        Thread backupProcessThread = null;
+        BackupObstacleDetector backupObstacleDetector = new BackupObstacleDetector();
+
         try {
-            backupSenderProcess = backupsender_builder.start();
-        } catch(IOException e){
+//            backupSenderProcess = backupsender_builder.start();
+            backupProcessThread = new Thread(backupObstacleDetector);
+            backupProcessThread.start();
+        } catch(Exception e){
             System.err.println("IOException: " + e.getMessage());
         }
+
+
         try {
-            Thread.sleep(15000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
         System.out.println("Rebooting sender");
-        ObstacleDetector detector = new ObstacleDetector((new SimulationStarter()).getQueue());
-        new Thread(detector).start();
         ProcessBuilder sender_builder = new ProcessBuilder("java", "-cp",
-                "." + File.separator +"out" + File.separator +"production"
+                helper + File.separator +"out" + File.separator +"production"
                         + File.separator +"assignment-1",
-                "rit.swen.architecture.detectors.ObstacleDetector", String.valueOf("10"));
-        sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                "rit.swen.architecture.detectors.ObstacleDetector", String.valueOf(13));
         try {
+            System.out.println("sender_builder.command(): " + sender_builder.command());
+            sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             sender_builder.start();
+            backupObstacleDetector.stop();
+//            backupProcessThread.wait();
+//            backupProcessThread.interrupt();
+
+//            backupProcessThread.stop();
+//            backupSenderProcess.destroy();
         } catch(IOException e){
             System.err.println("IOException: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        backupSenderProcess.destroy();
-        System.out.println("Sender reboot successful, shutting down backup detector.");
-
-
     }
 }
