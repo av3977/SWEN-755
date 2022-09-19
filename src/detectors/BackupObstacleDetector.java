@@ -1,13 +1,12 @@
-package rit.swen.architecture.detectors;
+package detectors;
 
-import rit.swen.architecture.controller.IController;
-import rit.swen.architecture.controller.RoadStatusReceiver;
-import rit.swen.architecture.road.LocationStep;
-import rit.swen.architecture.road.RoadType;
+import controller.IController;
+import controller.RoadStatusReceiver;
+import road.LocationStep;
+import road.RoadType;
 
 import java.io.IOException;
 import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.text.DecimalFormat;
@@ -33,7 +32,8 @@ public class BackupObstacleDetector implements Runnable{
     boolean stayActivated = true;
 
     public void initialize() throws IOException, NotBoundException {
-        registry = LocateRegistry.getRegistry(1098);
+//        registry = LocateRegistry.getRegistry(2098);
+        registry = LocateRegistry.getRegistry();
         receiverStubProgram = (IController) registry.lookup("IController");
         senderQueueReference = RoadStatusReceiver.getSenderLiveQueue();
     }

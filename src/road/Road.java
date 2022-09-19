@@ -1,8 +1,5 @@
-package rit.swen.architecture.road;
+package road;
 
-import java.io.IOException;
-import java.rmi.NotBoundException;
-import java.util.Calendar;
 import java.util.Random;
 
 public class Road {

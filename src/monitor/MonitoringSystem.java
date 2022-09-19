@@ -1,16 +1,13 @@
-package rit.swen.architecture.monitor;
+package monitor;
 
-import rit.swen.architecture.SimulationStarter;
-import rit.swen.architecture.controller.RoadStatusReceiver;
-import rit.swen.architecture.detectors.BackupObstacleDetector;
-import rit.swen.architecture.detectors.ObstacleDetector;
+import controller.RoadStatusReceiver;
+import detectors.BackupObstacleDetector;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.ExecutionException;
 
 public class MonitoringSystem {
 
@@ -47,16 +44,14 @@ public class MonitoringSystem {
 //        ProcessBuilder backupsender_builder = new ProcessBuilder("java", "-cp",
 //                helper + File.separator + "out"+ File.separator +"production" + File.separator +"assignment-1"
 //                        + File.separator,
-//                "rit.swen.architecture.detectors.BackupObstacleDetector", String.valueOf(RoadStatusReceiver.senderLiveQueue.peek()));
+//                "detectors.BackupObstacleDetector", String.valueOf(RoadStatusReceiver.senderLiveQueue.peek()));
 //        backupsender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         System.out.println("Built backup sender..");
 
-        Process backupSenderProcess = null;
         Thread backupProcessThread = null;
         BackupObstacleDetector backupObstacleDetector = new BackupObstacleDetector();
 
         try {
-//            backupSenderProcess = backupsender_builder.start();
             backupProcessThread = new Thread(backupObstacleDetector);
             backupProcessThread.start();
         } catch(Exception e){
@@ -74,7 +69,7 @@ public class MonitoringSystem {
         ProcessBuilder sender_builder = new ProcessBuilder("java", "-cp",
                 helper + File.separator +"out" + File.separator +"production"
                         + File.separator +"assignment-1",
-                "rit.swen.architecture.detectors.ObstacleDetector", String.valueOf(13));
+                "detectors.ObstacleDetector", String.valueOf(12));
         try {
             System.out.println("sender_builder.command(): " + sender_builder.command());
             sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);

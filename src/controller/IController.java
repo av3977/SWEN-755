@@ -1,4 +1,4 @@
-package rit.swen.architecture.controller;
+package controller;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

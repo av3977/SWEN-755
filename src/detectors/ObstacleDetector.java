@@ -1,21 +1,25 @@
-package rit.swen.architecture.detectors;
+package detectors;
 
-import rit.swen.architecture.controller.IController;
-import rit.swen.architecture.controller.RoadStatusReceiver;
-import rit.swen.architecture.road.LocationStep;
-import rit.swen.architecture.road.Road;
-import rit.swen.architecture.road.RoadType;
+import controller.IController;
+import controller.RoadStatusReceiver;
+import road.LocationStep;
+import road.Road;
+import road.RoadType;
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.text.DecimalFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class ObstacleDetector implements Runnable{
+public class ObstacleDetector {
 
     static BlockingQueue senderLiveQueue;
     public ObstacleDetector(BlockingQueue queue) {
@@ -34,26 +38,36 @@ public class ObstacleDetector implements Runnable{
     }
 
     private static boolean DETECTOR_FAILED;
-    public void initialize() throws IOException, NotBoundException {
-        DETECTOR_FAILED = false;
-        registry = LocateRegistry.getRegistry(1098);
-        receiverStubProgram = (IController) registry.lookup("IController");
+    public void initialize() {
+        try {
+            registry = LocateRegistry.getRegistry();
+            receiverStubProgram = (IController) LocateRegistry.getRegistry().lookup("IController");
+        }catch (IOException | NotBoundException exception) {
+            System.out.println("Sender initialize exception: " + exception.getMessage());
+            exception.printStackTrace();
+        }
     }
 
     public void sendMainHeatBeat(int location) {
-        System.out.println("Inside Sender's sendMainHeatBeat().." + senderLiveQueue);
-        while (true) {
-            try {
+        System.out.println("Inside send main heart beat..." + location);
+        RandomAccessFile rd;
+        FileChannel fc;
+        MappedByteBuffer mem;
+        try {
+            while (true) {
                 long currentTime = Calendar.getInstance().getTime().getTime();
-                RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
-                System.out.println("Detector (Sender): I am alive on step: " + (CURRENT_STEP++) + " at: " + currentTime);
+                System.out.println("Detector (Sender): I am alive on step: " + (location++) + " at: " + currentTime);
+                receiverStubProgram.readStatus(location);
                 /* wait for 2 seconds before sending the next heart beat signal */
                 Thread.sleep(HEARTBEAT_INTERVAL);
-            } catch (InterruptedException exception) {
-                System.out.println("Exception while reporting road status: " + exception.getMessage());
             }
+        } catch (InterruptedException exception) {
+            System.out.println("Sender side exception: " + exception.getMessage());
+            exception.printStackTrace();
+        } catch (RemoteException e) {
+            System.out.println("Sender side Remote exception: " + e.getMessage());
+            throw new RuntimeException(e);
         }
-
     }
     /**
      * Send road report
@@ -67,10 +81,6 @@ public class ObstacleDetector implements Runnable{
                 long currentTime = Calendar.getInstance().getTime().getTime();
                 current_location = getStep(current_location.getCoordinateStep());
 
-                String currentTimeStamp = String.format(String.valueOf(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss")), currentTime);
-                /**
-                 * ToDO: Fix date format.
-                 */
                 RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
                 System.out.println("Detector (Sender): I am alive on step: " + CURRENT_STEP + " on " + (Road.roadAhead[CURRENT_STEP]));
 
@@ -136,25 +146,26 @@ public class ObstacleDetector implements Runnable{
         ObstacleDetector sender = new ObstacleDetector();
         try{
             sender.initialize();
-            System.out.println("Rebooting sender from location step: "+ initiallocation);
             Thread.sleep(2000);
             sender.sendMainHeatBeat(initiallocation);
-        }catch(NotBoundException | IOException | InterruptedException ex){
-            System.out.println("Exception message: " + ex.getMessage());
+        }catch(InterruptedException ex){
             ex.printStackTrace();
+            System.out.println("Exception message: " + ex.getMessage());
         }
     }
 
-    @Override
+//    @Override
     public void run() {
         ObstacleDetector sender = new ObstacleDetector();
         try{
             sender.initialize();
             Thread.sleep(2000);
             System.out.println("sender initialized from thread run method");
-            // Run infinitely.
             sender.sendHeartBeat(RoadStatusReceiver.SENDER_LAST_STEP);
-        }catch(NotBoundException | IOException | InterruptedException ex){
+            // Run infinitely.
+            if (senderLiveQueue == null)
+                senderLiveQueue = new LinkedBlockingQueue();
+        }catch(InterruptedException ex){
             System.out.println("Exception message: " + ex.getMessage());
             ex.printStackTrace();
         }

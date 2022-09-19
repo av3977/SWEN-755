@@ -1,4 +1,4 @@
-package rit.swen.architecture.road;
+package road;
 
 public enum RoadType {
     NORMAL_ROAD,
