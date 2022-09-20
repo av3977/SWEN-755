@@ -14,6 +14,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.text.DecimalFormat;
 import java.util.Calendar;
 import java.util.concurrent.BlockingQueue;
@@ -30,7 +31,7 @@ public class ObstacleDetector {
     private Registry registry;
 
     public static int CURRENT_STEP = 0;
-    public boolean stayActive = true;
+    public boolean stayActive;
     private IController receiverStubProgram;
 
     public static boolean isDetectorFailed() {
@@ -40,8 +41,9 @@ public class ObstacleDetector {
     private static boolean DETECTOR_FAILED;
     public void initialize() {
         try {
-            registry = LocateRegistry.getRegistry();
-            receiverStubProgram = (IController) LocateRegistry.getRegistry().lookup("IController");
+            registry = LocateRegistry.getRegistry("localhost");
+            receiverStubProgram = (IController) registry.lookup("IController");
+            this.stayActive = true;
         }catch (IOException | NotBoundException exception) {
             System.out.println("Sender initialize exception: " + exception.getMessage());
             exception.printStackTrace();
@@ -69,39 +71,31 @@ public class ObstacleDetector {
             throw new RuntimeException(e);
         }
     }
+
     /**
      * Send road report
      * @param location
      * @throws IOException
      */
     public void sendHeartBeat(int location) {
-        LocationStep current_location = new LocationStep(toRoadType(location), Calendar.getInstance().getTime().getTime());
         while (stayActive) {
             try {
                 long currentTime = Calendar.getInstance().getTime().getTime();
-                current_location = getStep(current_location.getCoordinateStep());
-
                 RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
-                System.out.println("Detector (Sender): I am alive on step: " + CURRENT_STEP + " on " + (Road.roadAhead[CURRENT_STEP]));
-
+                System.out.println("Detector (Sender): I am alive on step: " + location + " on " + (Road.roadAhead[location]));
+                receiverStubProgram.readStatus(location);
                 /*wait for 2 seconds before sending the next heart beat signal*/
-                if (CURRENT_STEP >= Road.getRoadAhead().length) {
-                    DETECTOR_FAILED = true;
-                }
-
-                if (!DETECTOR_FAILED) {
-                    senderLiveQueue.put(CURRENT_STEP);
-                } else {
-                    DETECTOR_FAILED = true;
-                    return;
-                }
-                ++CURRENT_STEP;
+                location++;
                 Thread.sleep(HEARTBEAT_INTERVAL);
             } catch (ArrayIndexOutOfBoundsException indexOutOfBoundsException) {
+                System.out.println("Seen array index out of bounds: " + indexOutOfBoundsException.getMessage());
                 stayActive = false;
                 this.stop();
             } catch (InterruptedException exception) {
                 System.out.println("Exception while reporting road status: " + exception.getMessage());
+            } catch (RemoteException e) {
+                System.out.println("Sender received a RemoteException while reading status: " + e.getMessage());
+                throw new RuntimeException(e);
             }
         }
         System.out.println("-------Sender thread stopped-------");
@@ -147,27 +141,12 @@ public class ObstacleDetector {
         try{
             sender.initialize();
             Thread.sleep(2000);
-            sender.sendMainHeatBeat(initiallocation);
+            System.out.println("Sender initialized");
+//            sender.sendMainHeatBeat(initiallocation);
+            sender.sendHeartBeat(initiallocation);
         }catch(InterruptedException ex){
             ex.printStackTrace();
             System.out.println("Exception message: " + ex.getMessage());
-        }
-    }
-
-//    @Override
-    public void run() {
-        ObstacleDetector sender = new ObstacleDetector();
-        try{
-            sender.initialize();
-            Thread.sleep(2000);
-            System.out.println("sender initialized from thread run method");
-            sender.sendHeartBeat(RoadStatusReceiver.SENDER_LAST_STEP);
-            // Run infinitely.
-            if (senderLiveQueue == null)
-                senderLiveQueue = new LinkedBlockingQueue();
-        }catch(InterruptedException ex){
-            System.out.println("Exception message: " + ex.getMessage());
-            ex.printStackTrace();
         }
     }
 

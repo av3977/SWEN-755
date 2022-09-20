@@ -1,5 +1,6 @@
+import road.Road;
+
 import java.io.File;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ public class SimulationStarter {
     public SimulationStarter() {
         queue = new LinkedBlockingQueue();
     }
-    public static void main(String[] args) throws RemoteException {
+    public static void main(String[] args) {
         System.out.println("Hello, starting simulation..! ");
         SimulationStarter starter = new SimulationStarter();
         starter.queue.add(-1); // start car engine.
@@ -33,6 +34,8 @@ public class SimulationStarter {
 
             Thread.sleep(1000);
 
+            Road.buildRoad();
+
             System.out.println("Starting receiver controller");
             ProcessBuilder receiver_builder = new ProcessBuilder("java" , "-cp",
                     helper + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
@@ -47,26 +50,18 @@ public class SimulationStarter {
             System.out.println("Starting detector and it's sender");
             ProcessBuilder sender_builder = new ProcessBuilder("java" , "-cp",
                     helper + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
-                            + FILE_SEPARATOR +"assignment-1" + File.separator ,
+                            + FILE_SEPARATOR +"assignment-1" + FILE_SEPARATOR ,
                     "detectors.ObstacleDetector", "0");
             System.out.println("Sender process command: " + sender_builder.command());
             sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             Process senderProcess = sender_builder.start();
 
+            while (senderProcess.isAlive() && receiverProcess.isAlive())
+                continue;
+
         } catch (Exception e) {
+            System.out.println("Exception seen in main: " + e.getMessage());
             throw new RuntimeException(e);
         }
-    }
-
-    static void addPB(final ProcessBuilder pb) {
-        list.add(new Runnable() {
-            public void run() {
-                try {
-                    pb.start();
-                } catch (IOException ioe) {
-                    ioe.printStackTrace();
-                }
-            }
-        });
     }
 }

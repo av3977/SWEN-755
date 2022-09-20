@@ -41,23 +41,17 @@ public class MonitoringSystem {
         }
         System.out.println("Starting BackupSender");
 
-//        ProcessBuilder backupsender_builder = new ProcessBuilder("java", "-cp",
-//                helper + File.separator + "out"+ File.separator +"production" + File.separator +"assignment-1"
-//                        + File.separator,
-//                "detectors.BackupObstacleDetector", String.valueOf(RoadStatusReceiver.senderLiveQueue.peek()));
-//        backupsender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        System.out.println("Built backup sender..");
-
-        Thread backupProcessThread = null;
-        BackupObstacleDetector backupObstacleDetector = new BackupObstacleDetector();
-
+        ProcessBuilder backupsender_builder = new ProcessBuilder("java", "-cp",
+                helper + File.separator + "out"+ File.separator +"production" + File.separator +"assignment-1"
+                        + File.separator,
+                "detectors.BackupObstacleDetector", String.valueOf(RoadStatusReceiver.senderLiveQueue.peek()));
+        backupsender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         try {
-            backupProcessThread = new Thread(backupObstacleDetector);
-            backupProcessThread.start();
-        } catch(Exception e){
-            System.err.println("IOException: " + e.getMessage());
+            backupsender_builder.start();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-
+        System.out.println("Built backup sender..");
 
         try {
             Thread.sleep(5000);
@@ -74,12 +68,6 @@ public class MonitoringSystem {
             System.out.println("sender_builder.command(): " + sender_builder.command());
             sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             sender_builder.start();
-            backupObstacleDetector.stop();
-//            backupProcessThread.wait();
-//            backupProcessThread.interrupt();
-
-//            backupProcessThread.stop();
-//            backupSenderProcess.destroy();
         } catch(IOException e){
             System.err.println("IOException: " + e.getMessage());
         } catch (Exception e) {

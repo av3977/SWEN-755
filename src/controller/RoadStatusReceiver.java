@@ -12,7 +12,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class RoadStatusReceiver extends UnicastRemoteObject implements IController {
 
-    private static final int MONITORING_INTERVAL = 2000;
+    private static final int MONITORING_INTERVAL = 4000;
     private static final String REGISTRY_HOST = "localhost";
     public static long previousHeartBeatTimeStamp;
     private static int currentCoordinateStep;
@@ -23,7 +23,8 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
         senderLiveQueue = queue;
     }
 
-    protected RoadStatusReceiver() throws RemoteException {
+    public RoadStatusReceiver() throws RemoteException {
+        super();
     }
 
     public static long getPreviousHeartBeatTimeStamp() {
@@ -62,7 +63,6 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     public void monitorDetectorModule() throws RemoteException {
         while (true) {
             try {
-                System.out.println("Monitoring active...");
                 Thread.sleep(MONITORING_INTERVAL);
             } catch (InterruptedException e) {
                 System.out.println(e.getMessage());
@@ -84,10 +84,11 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
 
             RoadStatusReceiver receiver = new RoadStatusReceiver();
             receiver.initializeReceiver();
+            Thread.sleep(2000);
+            System.out.println("Receiver initialized");
             receiver.monitorDetectorModule();
-            System.out.println("Inside receiver main....");
         }catch(Exception ex){
-            System.out.println("Vehicle control - receiver exception  - " + ex.getMessage());
+            System.out.println("receiver main exception  - " + ex.getMessage());
         }
     }
 }

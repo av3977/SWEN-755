@@ -13,21 +13,12 @@ import java.text.DecimalFormat;
 import java.util.Calendar;
 import java.util.concurrent.BlockingQueue;
 
-public class BackupObstacleDetector implements Runnable{
+public class BackupObstacleDetector {
     private final int HEARTBEAT_INTERVAL = 2000;
     private Registry registry;
     public static int CURRENT_STEP = 0;
     private static BlockingQueue senderQueueReference;
     private IController receiverStubProgram;
-
-    public void setStayActivated(boolean stayActivated) {
-        System.out.println("Setting stay Activated: " + stayActivated);
-        this.stayActivated = stayActivated;
-    }
-
-    public boolean isStayActivated() {
-        return stayActivated;
-    }
 
     boolean stayActivated = true;
 
@@ -40,7 +31,7 @@ public class BackupObstacleDetector implements Runnable{
 
     public void sendHeartBeat(int location) throws IOException{
         LocationStep current_location = new LocationStep(toRoadType(location), Calendar.getInstance().getTime().getSeconds());
-        while(stayActivated){
+        while(true){
             try {
                 // read status after sending a heartbeat signal.
 //                receiverStubProgram.readStatus(current_location.getCoordinateStep());
@@ -51,9 +42,9 @@ public class BackupObstacleDetector implements Runnable{
                 Thread.sleep(HEARTBEAT_INTERVAL);
             }catch(InterruptedException ex){
                 System.out.println("BackupSender exception: " + ex.getMessage());
+                System.out.println("------KILLED BACKUP SENDER------");
             }
         }
-        System.out.println("------KILLED BACKUP SENDER------");
     }
 
     private static LocationStep getStep(int location){
@@ -74,7 +65,6 @@ public class BackupObstacleDetector implements Runnable{
         return RoadType.INVALID_READ;
     }
 
-
     public static void main(String [] args){
         int initiallocation;
 
@@ -93,22 +83,5 @@ public class BackupObstacleDetector implements Runnable{
         }catch(NotBoundException | IOException ex){
             ex.printStackTrace();
         }
-    }
-
-
-    @Override
-    public void run() {
-        try{
-            initialize();
-            senderQueueReference = ObstacleDetector.senderLiveQueue;
-            System.out.println("Backup Sender initialized");
-            sendHeartBeat(RoadStatusReceiver.SENDER_LAST_STEP);
-        }catch(NotBoundException | IOException ex){
-            ex.printStackTrace();
-        }
-    }
-
-    public void stop() {
-        this.stayActivated = false;
     }
 }
