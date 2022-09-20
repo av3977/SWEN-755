@@ -15,8 +15,17 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     private static final int MONITORING_INTERVAL = 4000;
     private static final String REGISTRY_HOST = "localhost";
     public static long previousHeartBeatTimeStamp;
-    private static int currentCoordinateStep;
-    public static int SENDER_LAST_STEP = -1;
+    public static int currentCoordinateStep;
+
+    public void setSENDER_LAST_STEP(int SENDER_LAST_STEP) {
+        this.SENDER_LAST_STEP = SENDER_LAST_STEP;
+    }
+
+    public int getSENDER_LAST_STEP() {
+        return SENDER_LAST_STEP;
+    }
+
+    private int SENDER_LAST_STEP = -1;
     public static BlockingQueue senderLiveQueue;
     public RoadStatusReceiver(BlockingQueue queue) throws RemoteException {
         super();
@@ -56,6 +65,7 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
         previousHeartBeatTimeStamp = System.currentTimeMillis();
         final String currentTimeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         System.out.println("Central Controller: current coordinate step: " + coordinateStep);
+        this.setSENDER_LAST_STEP(coordinateStep);
         System.out.println("Central Controller: Received heartbeat signal at : " + currentTimeStamp);
     }
 
@@ -69,15 +79,14 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
             }
             if (!isAlive()) {
                 System.out.println("Receiver: Heartbeat interval exceeded - Detector Component failed - View log for details");
-                MonitoringSystem.handleFault("Detector", this);
+                MonitoringSystem.handleFault("Detector", this, currentCoordinateStep);
             }
         }
     }
     private boolean isAlive(){
         long interval = System.currentTimeMillis() - previousHeartBeatTimeStamp;
-        int error = 100; //100ms error tolerable
-        return true;
-//        return interval <= (MONITORING_INTERVAL + error);
+        int error = 1000; //100ms error tolerable
+        return interval <= (MONITORING_INTERVAL + error);
     }
     public static void main(String[] args) {
         try{

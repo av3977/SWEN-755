@@ -32,6 +32,7 @@ public class ObstacleDetector {
 
     public static int CURRENT_STEP = 0;
     public boolean stayActive;
+
     private IController receiverStubProgram;
 
     public static boolean isDetectorFailed() {
@@ -78,19 +79,21 @@ public class ObstacleDetector {
      * @throws IOException
      */
     public void sendHeartBeat(int location) {
-        while (stayActive) {
+        while (true) {
             try {
                 long currentTime = Calendar.getInstance().getTime().getTime();
                 RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
                 System.out.println("Detector (Sender): I am alive on step: " + location + " on " + (Road.roadAhead[location]));
                 receiverStubProgram.readStatus(location);
                 /*wait for 2 seconds before sending the next heart beat signal*/
+                RoadStatusReceiver.currentCoordinateStep = location;
                 location++;
                 Thread.sleep(HEARTBEAT_INTERVAL);
             } catch (ArrayIndexOutOfBoundsException indexOutOfBoundsException) {
                 System.out.println("Seen array index out of bounds: " + indexOutOfBoundsException.getMessage());
                 stayActive = false;
                 this.stop();
+                break;
             } catch (InterruptedException exception) {
                 System.out.println("Exception while reporting road status: " + exception.getMessage());
             } catch (RemoteException e) {
@@ -142,6 +145,7 @@ public class ObstacleDetector {
             sender.initialize();
             Thread.sleep(2000);
             System.out.println("Sender initialized");
+            Road.buildRoad();
 //            sender.sendMainHeatBeat(initiallocation);
             sender.sendHeartBeat(initiallocation);
         }catch(InterruptedException ex){

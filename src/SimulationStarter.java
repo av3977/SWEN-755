@@ -8,12 +8,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class SimulationStarter {
-    public BlockingQueue queue;
+    public static BlockingQueue queue;
     static List<Runnable> list = new ArrayList<Runnable>();
 
     public BlockingQueue getQueue() {
         return queue;
     }
+
 
     public SimulationStarter() {
         queue = new LinkedBlockingQueue();
@@ -33,8 +34,6 @@ public class SimulationStarter {
             pb.start();
 
             Thread.sleep(1000);
-
-            Road.buildRoad();
 
             System.out.println("Starting receiver controller");
             ProcessBuilder receiver_builder = new ProcessBuilder("java" , "-cp",
@@ -56,7 +55,7 @@ public class SimulationStarter {
             sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             Process senderProcess = sender_builder.start();
 
-            while (senderProcess.isAlive() && receiverProcess.isAlive())
+            while (senderProcess.isAlive() || receiverProcess.isAlive())
                 continue;
 
         } catch (Exception e) {
