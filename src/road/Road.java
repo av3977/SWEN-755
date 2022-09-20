@@ -26,7 +26,6 @@ public class Road {
                 type = RoadType.WATER_SPLASH;
             }
             roadAhead[i] = type;
-//            LocationStep step = new LocationStep(type, Calendar.getInstance().getTime().getTime());
             randomStep = random.nextInt(UPPER_BOUND);
         }
     }

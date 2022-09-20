@@ -23,7 +23,6 @@ public class BackupObstacleDetector {
     boolean stayActivated = true;
 
     public void initialize() throws IOException, NotBoundException {
-//        registry = LocateRegistry.getRegistry(2098);
         registry = LocateRegistry.getRegistry();
         receiverStubProgram = (IController) registry.lookup("IController");
         senderQueueReference = RoadStatusReceiver.getSenderLiveQueue();
@@ -34,9 +33,7 @@ public class BackupObstacleDetector {
         while(true){
             try {
                 // read status after sending a heartbeat signal.
-//                receiverStubProgram.readStatus(current_location.getCoordinateStep());
                 long currentTime = Calendar.getInstance().getTime().getTime();
-
                 System.out.println("Detector (BackupSender): I am alive on step: " + (location++) + " at: " + currentTime);
                 // wait for 2000ms before sending next heartbeat signal.
                 Thread.sleep(HEARTBEAT_INTERVAL);

@@ -146,7 +146,6 @@ public class ObstacleDetector {
             Thread.sleep(2000);
             System.out.println("Sender initialized");
             Road.buildRoad();
-//            sender.sendMainHeatBeat(initiallocation);
             sender.sendHeartBeat(initiallocation);
         }catch(InterruptedException ex){
             ex.printStackTrace();
