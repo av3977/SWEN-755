@@ -1,6 +1,7 @@
 import road.Road;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,18 +12,11 @@ public class SimulationStarter {
     public static BlockingQueue queue;
     static List<Runnable> list = new ArrayList<Runnable>();
 
-    public BlockingQueue getQueue() {
-        return queue;
-    }
-
-
     public SimulationStarter() {
         queue = new LinkedBlockingQueue();
     }
     public static void main(String[] args) {
         System.out.println("Hello, starting simulation..! ");
-        SimulationStarter starter = new SimulationStarter();
-        starter.queue.add(-1); // start car engine.
         File currentDirFile = new File("");
         String helper = currentDirFile.getAbsolutePath();
         String FILE_SEPARATOR = File.separator;
@@ -32,6 +26,14 @@ public class SimulationStarter {
             pb.directory(new File("." + File.separator +"out" + File.separator +"production"+ File.separator +"assignment-1"));
             pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             pb.start();
+
+            final String SHARED_FILE = "."+ File.separator +"src"
+                    + File.separator + "logs"+ File.separator +"file.txt";
+
+            File file = new File(SHARED_FILE);
+            PrintWriter writer = new PrintWriter(file);
+            writer.print("");
+            writer.close();
 
             Thread.sleep(1000);
 
@@ -50,10 +52,20 @@ public class SimulationStarter {
             ProcessBuilder sender_builder = new ProcessBuilder("java" , "-cp",
                     helper + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
                             + FILE_SEPARATOR +"assignment-1" + FILE_SEPARATOR ,
-                    "detectors.ObstacleDetector", "0");
+                    "detectors.ObstacleDetector", "0", "Sender1");
+
             System.out.println("Sender process command: " + sender_builder.command());
             sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             Process senderProcess = sender_builder.start();
+
+            ProcessBuilder sender_builder2 = new ProcessBuilder("java" , "-cp",
+                    helper + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
+                            + FILE_SEPARATOR +"assignment-1" + FILE_SEPARATOR ,
+                    "detectors.ObstacleDetector", "0", "Sender2");
+
+            System.out.println("Sender process command: " + sender_builder2.command());
+            sender_builder2.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            Process senderProcess2 = sender_builder2.start();
 
             while (senderProcess.isAlive() || receiverProcess.isAlive())
                 continue;

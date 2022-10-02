@@ -6,19 +6,15 @@ import road.LocationStep;
 import road.Road;
 import road.RoadType;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.text.DecimalFormat;
 import java.util.Calendar;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class ObstacleDetector {
 
@@ -34,6 +30,25 @@ public class ObstacleDetector {
     public boolean stayActive;
 
     private IController receiverStubProgram;
+    private String processName;
+
+    public int getHops() {
+        return hops;
+    }
+
+    public void setHops(int hops) {
+        this.hops = hops;
+    }
+
+    private int hops;
+
+    public void setProcessName(String processName) {
+        this.processName = processName;
+    }
+
+    public String getProcessName() {
+        return processName;
+    }
 
     public static boolean isDetectorFailed() {
         return DETECTOR_FAILED;
@@ -51,28 +66,29 @@ public class ObstacleDetector {
         }
     }
 
-    public void sendMainHeatBeat(int location) {
-        System.out.println("Inside send main heart beat..." + location);
-        RandomAccessFile rd;
-        FileChannel fc;
-        MappedByteBuffer mem;
+    final String SHARED_FILE = "."+ File.separator +"src"
+            + File.separator + "logs"+ File.separator +"file.txt";
+    public synchronized void writeStep(int stepLocation) {
+        FileOutputStream fos = null;
         try {
-            while (true) {
-                long currentTime = Calendar.getInstance().getTime().getTime();
-                System.out.println("Detector (Sender): I am alive on step: " + (location++) + " at: " + currentTime);
-                receiverStubProgram.readStatus(location);
-                /* wait for 2 seconds before sending the next heart beat signal */
-                Thread.sleep(HEARTBEAT_INTERVAL);
-            }
-        } catch (InterruptedException exception) {
-            System.out.println("Sender side exception: " + exception.getMessage());
-            exception.printStackTrace();
-        } catch (RemoteException e) {
-            System.out.println("Sender side Remote exception: " + e.getMessage());
+            File current = new File(SHARED_FILE);
+            if (!current.exists())
+                current.createNewFile();
+            fos = new FileOutputStream(current);
+            OutputStreamWriter output = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
+            output.write(stepLocation);
+            fos.close();
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    private synchronized void appendData(String filePath, int location) throws IOException {
+        RandomAccessFile raFile = new RandomAccessFile(filePath, "rw");
+        raFile.seek(raFile.length());
+        raFile.write(String.valueOf(this.getProcessName() + "-" + location + "\n").getBytes());
+        raFile.close();
+    }
     /**
      * Send road report
      * @param location
@@ -83,25 +99,33 @@ public class ObstacleDetector {
             try {
                 long currentTime = Calendar.getInstance().getTime().getTime();
                 RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
-                System.out.println("Detector (Sender): I am alive on step: " + location + " on " + (Road.roadAhead[location]));
-                receiverStubProgram.readStatus(location);
+                try {
+                    appendData(SHARED_FILE, location);
+                } catch (IOException e) {
+                    System.out.println("IO Exception while writing to sender: " + e.getMessage());
+                    throw new RuntimeException(e);
+                }
                 /*wait for 2 seconds before sending the next heart beat signal*/
+                System.out.println("Car running on: " + Road.roadAhead[location]);
+                receiverStubProgram.readStatus(location, this.getProcessName());
                 RoadStatusReceiver.currentCoordinateStep = location;
-                location++;
+                location+=this.getHops();
+                if (location >= Road.roadAhead.length) {
+                    System.out.println("Sender failed.!!");
+                    throw new ArrayIndexOutOfBoundsException();
+                }
                 Thread.sleep(HEARTBEAT_INTERVAL);
             } catch (ArrayIndexOutOfBoundsException indexOutOfBoundsException) {
                 System.out.println("Seen array index out of bounds: " + indexOutOfBoundsException.getMessage());
-                stayActive = false;
-                this.stop();
                 break;
             } catch (InterruptedException exception) {
                 System.out.println("Exception while reporting road status: " + exception.getMessage());
+                break;
             } catch (RemoteException e) {
-                System.out.println("Sender received a RemoteException while reading status: " + e.getMessage());
+                System.out.println("Receiver read status exception: " + e.getMessage());
                 throw new RuntimeException(e);
             }
         }
-        System.out.println("-------Sender thread stopped-------");
     }
 
     private static LocationStep getStep(int location){
@@ -127,20 +151,25 @@ public class ObstacleDetector {
         return type;
     }
 
-    public ObstacleDetector() {
-
-    }
+    public ObstacleDetector() {}
 
     public static void main(String [] args){
         int initiallocation;
+        String pname = "Default";
+        if (args.length == 2 && (args[1] != null || !"".equals(args[1]))) {
+            pname = args[1];
+        }
         if(args.length == 0 ){
             initiallocation = 0;
-        }
-        else{
+        } else{
             initiallocation = Integer.valueOf(args[0]);
             CURRENT_STEP = initiallocation;
         }
         ObstacleDetector sender = new ObstacleDetector();
+        sender.setProcessName(pname);
+        if (!"Default".equals(pname)) {
+            sender.setHops(Integer.parseInt(pname.substring(pname.length() - 1)));
+        }
         try{
             sender.initialize();
             Thread.sleep(2000);
@@ -151,9 +180,5 @@ public class ObstacleDetector {
             ex.printStackTrace();
             System.out.println("Exception message: " + ex.getMessage());
         }
-    }
-
-    public void stop() {
-        this.stayActive = false;
     }
 }

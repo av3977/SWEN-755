@@ -5,9 +5,8 @@ import controller.RoadStatusReceiver;
 import detectors.BackupObstacleDetector;
 import road.Road;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -18,8 +17,19 @@ public class MonitoringSystem {
 
     private String component;
     private static final String LOGGING_FILE_PATH = "."+ File.separator +"src"
-    + File.separator + "rit" + File.separator + "swen" + File.separator + "architecture"
         + File.separator + "logs"+ File.separator +"failure_log.txt";
+
+
+    private static int getSenderFailureStep(String fileName) {
+        BufferedReader input;
+        long lines = 0;
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            while (reader.readLine() != null) lines++;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return (int) lines;
+    }
 
     // Handles faults and logs failures
     public static void handleFault(String component, RoadStatusReceiver failedReceiver, int failedAtStep){
@@ -31,7 +41,7 @@ public class MonitoringSystem {
         } catch (NotBoundException e) {
             throw new RuntimeException(e);
         }
-        File currentDirFile = new File(".");
+        File currentDirFile = new File("");
         String helper = currentDirFile.getAbsolutePath();
         System.out.println("FaultMonitor: Sender failed");
         // Log failure
@@ -52,12 +62,21 @@ public class MonitoringSystem {
                 System.err.println("IOException: " + io.getMessage());
             }
         }
+        final String SHARED_FILE = "."+ File.separator +"src"
+                + File.separator + "logs"+ File.separator +"file.txt";
 
-        System.out.println("Starting BackupSender from step: " + failedAtStep);
+        try {
+            RandomAccessFile file = new RandomAccessFile(SHARED_FILE, "r");
+            file.seek(file.getFilePointer());
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        System.out.println("Starting BackupSender from step: " + getSenderFailureStep(SHARED_FILE));
         ProcessBuilder backupsender_builder = new ProcessBuilder("java", "-cp",
                 helper + File.separator + "out"+ File.separator +"production" + File.separator +"assignment-1"
                         + File.separator,
-                "detectors.BackupObstacleDetector", String.valueOf(failedAtStep));
+                "detectors.BackupObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)));
         backupsender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         Process backupSenderProcess;
         try {
@@ -77,7 +96,7 @@ public class MonitoringSystem {
         ProcessBuilder sender_builder = new ProcessBuilder("java", "-cp",
                 helper + File.separator +"out" + File.separator +"production"
                         + File.separator +"assignment-1",
-                "detectors.ObstacleDetector", String.valueOf(0));
+                "detectors.ObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)));
         try {
             System.out.println("sender_builder.command(): " + sender_builder.command());
             sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
