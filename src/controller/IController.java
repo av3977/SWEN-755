@@ -12,7 +12,7 @@ public interface IController extends Remote {
     /**
      *  read data received from detector(sender).
      */
-    void readStatus(int location) throws RemoteException;
+    void readStatus(int location, String processName) throws RemoteException;
 
     /**
      * audit the health of receiver at each stage, i.e after every second.

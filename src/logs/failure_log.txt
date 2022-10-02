@@ -1,0 +1,49 @@
+
+
+Detector component failed on : 2022-10-01 21-05-32
+
+Detector component failed on : 2022-10-01 21-05-39
+
+Detector component failed on : 2022-10-01 21-05-46
+
+Detector component failed on : 2022-10-01 21-10-00
+
+Detector component failed on : 2022-10-01 21-10-07
+
+Detector component failed on : 2022-10-01 21-36-12
+
+Detector component failed on : 2022-10-01 21-36-19
+
+Detector component failed on : 2022-10-01 21-48-09
+
+Detector component failed on : 2022-10-01 21-49-48
+
+Detector component failed on : 2022-10-01 21-52-20
+
+Detector component failed on : 2022-10-01 21-54-20
+
+Detector component failed on : 2022-10-01 21-54-27
+
+Detector component failed on : 2022-10-01 21-55-28
+
+Detector component failed on : 2022-10-01 21-55-35
+
+Detector component failed on : 2022-10-01 21-58-04
+
+Detector component failed on : 2022-10-01 21-58-11
+
+Detector component failed on : 2022-10-01 21-58-18
+
+Detector component failed on : 2022-10-01 21-58-25
+
+Detector component failed on : 2022-10-02 15-31-55
+
+Detector component failed on : 2022-10-02 15-32-02
+
+Detector component failed on : 2022-10-02 15-32-09
+
+Detector component failed on : 2022-10-02 15-32-16
+
+Detector component failed on : 2022-10-02 15-32-23
+
+Detector component failed on : 2022-10-02 16-10-46
