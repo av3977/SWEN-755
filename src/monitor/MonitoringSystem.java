@@ -12,6 +12,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 public class MonitoringSystem {
 
@@ -21,14 +22,19 @@ public class MonitoringSystem {
 
 
     private static int getSenderFailureStep(String fileName) {
-        BufferedReader input;
         long lines = 0;
+        int minVisitedPath = Integer.MAX_VALUE;
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-            while (reader.readLine() != null) lines++;
+            String read = reader.readLine();
+            while (read != null) {
+                minVisitedPath = Math.min(minVisitedPath, Integer.parseInt(read.split("-")[1]));
+                lines++;
+                read = reader.readLine();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return (int) lines;
+        return minVisitedPath;
     }
 
     // Handles faults and logs failures
@@ -96,7 +102,8 @@ public class MonitoringSystem {
         ProcessBuilder sender_builder = new ProcessBuilder("java", "-cp",
                 helper + File.separator +"out" + File.separator +"production"
                         + File.separator +"assignment-1",
-                "detectors.ObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)));
+                "detectors.ObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)), "Reboot1");
+        System.out.println("Sender Reboot Command: " + sender_builder.command());
         try {
             System.out.println("sender_builder.command(): " + sender_builder.command());
             sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
