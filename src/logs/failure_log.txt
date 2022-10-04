@@ -69,3 +69,13 @@ Detector component failed on : 2022-10-02 22-05-51
 Detector component failed on : 2022-10-02 22-08-37
 
 Detector component failed on : 2022-10-02 22-08-44
+
+Detector component failed on : 2022-10-04 18-50-19
+
+Detector component failed on : 2022-10-04 18-50-26
+
+Detector component failed on : 2022-10-04 18-50-33
+
+Detector component failed on : 2022-10-04 18-53-10
+
+Detector component failed on : 2022-10-04 18-53-17

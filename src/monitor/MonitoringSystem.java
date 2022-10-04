@@ -22,19 +22,17 @@ public class MonitoringSystem {
 
 
     private static int getSenderFailureStep(String fileName) {
-        long lines = 0;
-        int minVisitedPath = Integer.MAX_VALUE;
+        int maxValue = Integer.MIN_VALUE;
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String read = reader.readLine();
             while (read != null) {
-                minVisitedPath = Math.min(minVisitedPath, Integer.parseInt(read.split("-")[1]));
-                lines++;
+                maxValue = Math.max(maxValue, Integer.parseInt(read.split("-")[1]));
                 read = reader.readLine();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return minVisitedPath;
+        return maxValue;
     }
 
     // Handles faults and logs failures

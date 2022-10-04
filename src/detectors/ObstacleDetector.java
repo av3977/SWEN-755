@@ -140,7 +140,7 @@ public class ObstacleDetector {
                 /**
                  * wait for 2 seconds before sending the next heart beat signal
                  */
-                System.out.println("Car running on: " + Road.roadAhead[location]);
+                System.out.println("Car running on: " + Road.roadAhead[location%10]);
                 receiverStubProgram.readStatus(location, this.getProcessName());
                 RoadStatusReceiver.currentCoordinateStep = location;
                 location+=this.getHops();
