@@ -105,15 +105,45 @@ public class ObstacleDetector {
                     System.out.println("IO Exception while writing to sender: " + e.getMessage());
                     throw new RuntimeException(e);
                 }
-                /*wait for 2 seconds before sending the next heart beat signal*/
+                /**
+                 * wait for 2 seconds before sending the next heart beat signal
+                 */
                 System.out.println("Car running on: " + Road.roadAhead[location]);
                 receiverStubProgram.readStatus(location, this.getProcessName());
                 RoadStatusReceiver.currentCoordinateStep = location;
                 location+=this.getHops();
-                if (location >= Road.roadAhead.length) {
-                    System.out.println("Sender failed.!!");
-                    throw new ArrayIndexOutOfBoundsException();
+                Thread.sleep(HEARTBEAT_INTERVAL);
+            } catch (ArrayIndexOutOfBoundsException indexOutOfBoundsException) {
+                System.out.println("Seen array index out of bounds: " + this.getProcessName());
+                break;
+            } catch (InterruptedException exception) {
+                System.out.println("Exception while reporting road status: " + exception.getMessage());
+                break;
+            } catch (RemoteException e) {
+                System.out.println("Receiver read status exception: " + e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void sendStepsFromReboot(int location) {
+        while (true) {
+            try {
+                long currentTime = Calendar.getInstance().getTime().getTime();
+                RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
+                try {
+                    appendData(SHARED_FILE, location);
+                } catch (IOException e) {
+                    System.out.println("IO Exception while writing to sender: " + e.getMessage());
+                    throw new RuntimeException(e);
                 }
+                /**
+                 * wait for 2 seconds before sending the next heart beat signal
+                 */
+                System.out.println("Car running on: " + Road.roadAhead[location%10]);
+                receiverStubProgram.readStatus(location, this.getProcessName());
+                RoadStatusReceiver.currentCoordinateStep = location;
+                location+=this.getHops();
                 Thread.sleep(HEARTBEAT_INTERVAL);
             } catch (ArrayIndexOutOfBoundsException indexOutOfBoundsException) {
                 System.out.println("Seen array index out of bounds: " + indexOutOfBoundsException.getMessage());
@@ -169,13 +199,19 @@ public class ObstacleDetector {
         sender.setProcessName(pname);
         if (!"Default".equals(pname)) {
             sender.setHops(Integer.parseInt(pname.substring(pname.length() - 1)));
+        } else {
+            sender.setHops(1);
         }
         try{
             sender.initialize();
             Thread.sleep(2000);
             System.out.println("Sender initialized");
             Road.buildRoad();
-            sender.sendHeartBeat(initiallocation);
+            if (pname.startsWith("Reboot")) {
+                sender.sendStepsFromReboot(initiallocation);
+            } else {
+                sender.sendHeartBeat(initiallocation);
+            }
         }catch(InterruptedException ex){
             ex.printStackTrace();
             System.out.println("Exception message: " + ex.getMessage());
