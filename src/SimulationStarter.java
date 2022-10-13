@@ -1,8 +1,14 @@
+import controller.IController;
+import controller.RoadStatusReceiver;
 import road.Road;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -48,13 +54,16 @@ public class SimulationStarter {
             Process receiverProcess = receiver_builder.start();
             Thread.sleep(2000);
 
+
+            IController receiverProgramStub = getReceiverStub();
+
             System.out.println("Starting detector and it's sender");
             ProcessBuilder sender_builder = new ProcessBuilder("java" , "-cp",
                     helper + FILE_SEPARATOR +"out" + FILE_SEPARATOR +"production"
                             + FILE_SEPARATOR +"assignment-1" + FILE_SEPARATOR ,
                     "detectors.ObstacleDetector", "0", "Sender1");
+            System.out.println("Sender Builder Command: " + sender_builder.command());
 
-            System.out.println("Sender process command: " + sender_builder.command());
             sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             Process senderProcess = sender_builder.start();
 
@@ -63,9 +72,7 @@ public class SimulationStarter {
                             + FILE_SEPARATOR +"assignment-1" + FILE_SEPARATOR ,
                     "detectors.ObstacleDetector", "0", "Sender2");
 
-            System.out.println("Sender process command: " + sender_builder2.command());
             sender_builder2.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-            Process senderProcess2 = sender_builder2.start();
 
             while (senderProcess.isAlive() || receiverProcess.isAlive())
                 continue;
@@ -74,5 +81,16 @@ public class SimulationStarter {
             System.out.println("Exception seen in main: " + e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    private static IController getReceiverStub() {
+        try {
+            Registry registry = LocateRegistry.getRegistry("localhost");
+            return (IController) registry.lookup("IController");
+        }catch (IOException | NotBoundException exception) {
+            System.out.println("Sender initialize exception: " + exception.getMessage());
+            exception.printStackTrace();
+        }
+        return null;
     }
 }

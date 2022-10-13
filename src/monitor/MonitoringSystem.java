@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -34,15 +35,18 @@ public class MonitoringSystem {
         }
         return maxValue;
     }
+    private static Registry registry;
+    private static IController receiverStubProgram;
+
 
     // Handles faults and logs failures
-    public static void handleFault(String component, RoadStatusReceiver failedReceiver, int failedAtStep){
-        IController receiverStubProgram;
+    public static void handleFault(String component, RoadStatusReceiver failedReceiver, char process) throws RemoteException {
+        IController receiverStubProgram = null;
+        String active = "";
         try {
-            receiverStubProgram = (IController) LocateRegistry.getRegistry("localhost").lookup("IController");
+            System.out.println("Active Process: " + failedReceiver.getActiveProcess());
+            System.out.println("Process names: " + failedReceiver.getProcessesSet());
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        } catch (NotBoundException e) {
             throw new RuntimeException(e);
         }
         File currentDirFile = new File("");
@@ -76,42 +80,38 @@ public class MonitoringSystem {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        System.out.println("Starting BackupSender from step: " + getSenderFailureStep(SHARED_FILE));
-        ProcessBuilder backupsender_builder = new ProcessBuilder("java", "-cp",
-                helper + File.separator + "out"+ File.separator +"production" + File.separator +"assignment-1"
-                        + File.separator,
-                "detectors.BackupObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)));
-        backupsender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        Process backupSenderProcess;
-        try {
-            backupSenderProcess = backupsender_builder.start();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (failedReceiver.getActiveProcess() == 'S') {
+            System.out.println("Starting BackupSender from step: " + getSenderFailureStep(SHARED_FILE));
+            ProcessBuilder backupsender_builder = new ProcessBuilder("java", "-cp",
+                    helper + File.separator + "out"+ File.separator +"production" + File.separator +"assignment-1"
+                            + File.separator,
+                    "detectors.BackupObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)));
+            backupsender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            Process backupSenderProcess;
+            try {
+                backupSenderProcess = backupsender_builder.start();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else if (failedReceiver.getActiveProcess() == 'B') {
+            Road.buildRoad();
+            ProcessBuilder sender_builder = new ProcessBuilder("java", "-cp",
+                    helper + File.separator +"out" + File.separator +"production"
+                            + File.separator +"assignment-1",
+                    "detectors.ObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)), "Sender1");
+            try {
+                sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                sender_builder.start();
+            } catch(IOException e){
+                System.err.println("IOException: " + e.getMessage());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
-
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-        System.out.println("Rebooting sender");
-        Road.buildRoad();
-        ProcessBuilder sender_builder = new ProcessBuilder("java", "-cp",
-                helper + File.separator +"out" + File.separator +"production"
-                        + File.separator +"assignment-1",
-                "detectors.ObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)), "Reboot1");
-        System.out.println("Sender Reboot Command: " + sender_builder.command());
-        try {
-            System.out.println("sender_builder.command(): " + sender_builder.command());
-            sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-            sender_builder.start();
-        } catch(IOException e){
-            System.err.println("IOException: " + e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-    backupSenderProcess.destroy();
     }
 }

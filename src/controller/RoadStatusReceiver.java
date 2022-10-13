@@ -3,7 +3,6 @@ package controller;
 import monitor.MonitoringSystem;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
@@ -13,8 +12,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.stream.Stream;
 
 public class RoadStatusReceiver extends UnicastRemoteObject implements IController {
 
@@ -23,16 +22,6 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     public static long previousHeartBeatTimeStamp = System.currentTimeMillis();
     public static int currentCoordinateStep;
     public static int FILE_POINTER = 0;
-
-    public void setSENDER_LAST_STEP(int SENDER_LAST_STEP) {
-        this.SENDER_LAST_STEP = SENDER_LAST_STEP;
-    }
-
-    public int getSENDER_LAST_STEP() {
-        return SENDER_LAST_STEP;
-    }
-
-    private int SENDER_LAST_STEP = -1;
     public static BlockingQueue senderLiveQueue;
     public RoadStatusReceiver(BlockingQueue queue) throws RemoteException {
         super();
@@ -56,15 +45,68 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     }
 
     @Override
-    public void initializeReceiver() throws RemoteException {
+    public boolean addProcessName(String processName) throws RemoteException {
+        return processesNameSet.add(processName);
+    }
+    @Override
+    public boolean removeProcessName(String processName) throws RemoteException {
+        return processesNameSet.remove(processName);
+    }
+
+    @Override
+    public void setActiveProcessToSender() throws RemoteException {
+        activeProcess.setCharAt(0, 'S');
+    }
+
+    @Override
+    public void setActiveProcessToBackupSender() throws RemoteException {
+        activeProcess.setCharAt(0, 'B');
+    }
+
+    @Override
+    public char getActiveProcess() throws RemoteException {
+        return activeProcess.charAt(0);
+    }
+
+    @Override
+    public boolean addProcessBuilders(ProcessBuilder processBuilder) throws RemoteException {
+        processBuilders.addLast(processBuilder);
+        return true;
+    }
+
+    @Override
+    public boolean addProcessToProcesses(Process process) throws RemoteException {
+        processes.addLast(process);
+        return true;
+    }
+    @Override
+    public boolean cleanProcessQueues() throws RemoteException {
+        for (Process p: processes) {
+            if (!p.isAlive()) {
+                for (ProcessBuilder builder: processBuilders) {
+                    String processName = builder.command().get(builder.command().size()-1);
+                    processBuilders.remove(processName);
+                }
+                processes.remove(p);
+            }
+        }
+        return true;
+    }
+    @Override
+    public List<String> getProcessesSet() throws RemoteException {
+        return processesNameSet;
+    }
+    @Override
+    public RoadStatusReceiver initializeReceiver() throws RemoteException {
+        RoadStatusReceiver roadStatusReceiver = new RoadStatusReceiver();
         try {
-            RoadStatusReceiver roadStatusReceiver = new RoadStatusReceiver();
             Registry registry = LocateRegistry.getRegistry(REGISTRY_HOST);
             registry.rebind("IController", roadStatusReceiver);
         } catch (Exception e) {
             System.out.println("Receiver Exception : " + e.getMessage());
             e.printStackTrace();
         }
+        return roadStatusReceiver;
     }
 
     @Override
@@ -72,7 +114,6 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
         previousHeartBeatTimeStamp = System.currentTimeMillis();
         final String currentTimeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         System.out.println(String.format("Central Controller %s: current coordinate step: %s", processName, coordinateStep));
-        this.setSENDER_LAST_STEP(coordinateStep);
 //        System.out.println("Central Controller: Received heartbeat signal at : " + currentTimeStamp);
     }
 
@@ -85,13 +126,14 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
                     System.out.println("Read step: " +line);
                     FILE_POINTER+=1;
                 }
+//                cleanProcessQueues();
                 Thread.sleep(MONITORING_INTERVAL);
             } catch (InterruptedException | IOException e) {
                 System.out.println(e.getMessage());
             }
             if (!isAlive()) {
                 System.out.println("Receiver: Heartbeat interval exceeded - Detector Component failed - View log for details");
-                MonitoringSystem.handleFault("Detector", this, currentCoordinateStep);
+                MonitoringSystem.handleFault("Initial Sender", this, getActiveProcess());
             }
         }
     }
@@ -112,7 +154,7 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     }
     private boolean isAlive(){
         long interval = System.currentTimeMillis() - previousHeartBeatTimeStamp;
-        int error = 8000;
+        int error = 4000;
         return interval <= (MONITORING_INTERVAL + error);
     }
 
@@ -127,7 +169,6 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
         String line = "";
         try{
             List<String> allLines = Files.readAllLines(Paths.get(filePath));
-
             if (allLines.size() > seek) {
                 line = allLines.get(seek);
             }
@@ -146,8 +187,8 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     public static void main(String[] args) {
         try{
 
-            RoadStatusReceiver receiver = new RoadStatusReceiver();
-            receiver.initializeReceiver();
+            RoadStatusReceiver receiver = new RoadStatusReceiver(); // instantiate
+            receiver = receiver.initializeReceiver(); // bind and return reference
             Thread.sleep(2000);
             System.out.println("Receiver initialized");
             receiver.monitorDetectorModule();
