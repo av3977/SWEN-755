@@ -2,9 +2,7 @@ package detectors;
 
 import controller.IController;
 import controller.RoadStatusReceiver;
-import road.LocationStep;
 import road.Road;
-import road.RoadType;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -12,8 +10,8 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.text.DecimalFormat;
 import java.util.Calendar;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 
 public class ObstacleDetector {
@@ -55,11 +53,12 @@ public class ObstacleDetector {
     }
 
     private static boolean DETECTOR_FAILED;
-    public void initialize() {
+    public void initialize(String processName) {
         try {
             registry = LocateRegistry.getRegistry("localhost");
             receiverStubProgram = (IController) registry.lookup("IController");
-            this.stayActive = true;
+            receiverStubProgram.addProcessName(processName);
+            receiverStubProgram.setActiveProcessToSender();
         }catch (IOException | NotBoundException exception) {
             System.out.println("Sender initialize exception: " + exception.getMessage());
             exception.printStackTrace();
@@ -94,39 +93,9 @@ public class ObstacleDetector {
      * @param location
      * @throws IOException
      */
-    public void sendHeartBeat(int location) {
-        while (true) {
-            try {
-                long currentTime = Calendar.getInstance().getTime().getTime();
-                RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
-                try {
-                    appendData(SHARED_FILE, location);
-                } catch (IOException e) {
-                    System.out.println("IO Exception while writing to sender: " + e.getMessage());
-                    throw new RuntimeException(e);
-                }
-                /**
-                 * wait for 2 seconds before sending the next heart beat signal
-                 */
-                System.out.println("Car running on: " + Road.roadAhead[location]);
-                receiverStubProgram.readStatus(location, this.getProcessName());
-                RoadStatusReceiver.currentCoordinateStep = location;
-                location+=this.getHops();
-                Thread.sleep(HEARTBEAT_INTERVAL);
-            } catch (ArrayIndexOutOfBoundsException indexOutOfBoundsException) {
-                System.out.println("Seen array index out of bounds: " + this.getProcessName());
-                break;
-            } catch (InterruptedException exception) {
-                System.out.println("Exception while reporting road status: " + exception.getMessage());
-                break;
-            } catch (RemoteException e) {
-                System.out.println("Receiver read status exception: " + e.getMessage());
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    public void sendStepsFromReboot(int location) {
+    public void sendHeartBeat(int location) throws RemoteException {
+        System.out.println("Sender sending heartbeat starting now.");
+        Random random = new Random();
         while (true) {
             try {
                 long currentTime = Calendar.getInstance().getTime().getTime();
@@ -144,9 +113,15 @@ public class ObstacleDetector {
                 receiverStubProgram.readStatus(location, this.getProcessName());
                 RoadStatusReceiver.currentCoordinateStep = location;
                 location+=this.getHops();
-                Thread.sleep(HEARTBEAT_INTERVAL);
+                int threadSleep = random.ints(2000, 5000)
+                        .findFirst()
+                        .getAsInt();
+                System.out.println("Thread Sleep: " + threadSleep);
+                if (threadSleep > 4000)
+                    break;
+                Thread.sleep(threadSleep);
             } catch (ArrayIndexOutOfBoundsException indexOutOfBoundsException) {
-                System.out.println("Seen array index out of bounds: " + indexOutOfBoundsException.getMessage());
+                System.out.println("Seen array index out of bounds: " + this.getProcessName());
                 break;
             } catch (InterruptedException exception) {
                 System.out.println("Exception while reporting road status: " + exception.getMessage());
@@ -156,31 +131,8 @@ public class ObstacleDetector {
                 throw new RuntimeException(e);
             }
         }
+        receiverStubProgram.removeProcessName(this.getProcessName());
     }
-
-    private static LocationStep getStep(int location){
-        DecimalFormat df = new DecimalFormat("##.00");
-        location +=1;
-        long timeInSeconds = Calendar.getInstance().getTime().getTime();
-        return new LocationStep(toRoadType(location), timeInSeconds);
-    }
-
-    private static RoadType toRoadType(int location) {
-        RoadType type = RoadType.INVALID_READ;
-        switch (location) {
-            case 0:
-                type = RoadType.NORMAL_ROAD;
-                break;
-            case 1:
-                type = RoadType.WATER_SPLASH;
-                break;
-            case 2:
-                type = RoadType.POT_HOLE;
-                break;
-        }
-        return type;
-    }
-
     public ObstacleDetector() {}
 
     public static void main(String [] args){
@@ -203,14 +155,15 @@ public class ObstacleDetector {
             sender.setHops(1);
         }
         try{
-            sender.initialize();
-            Thread.sleep(2000);
+            sender.initialize(pname);
+            Thread.sleep(1500);
             System.out.println("Sender initialized");
             Road.buildRoad();
-            if (pname.startsWith("Reboot")) {
-                sender.sendStepsFromReboot(initiallocation);
-            } else {
+            try {
                 sender.sendHeartBeat(initiallocation);
+            } catch (RemoteException exception) {
+                System.out.println("Remote Exception from sendHeartBeat: " + exception.getMessage());
+                exception.printStackTrace();
             }
         }catch(InterruptedException ex){
             ex.printStackTrace();

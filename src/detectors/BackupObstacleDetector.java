@@ -2,17 +2,14 @@ package detectors;
 
 import controller.IController;
 import controller.RoadStatusReceiver;
-import road.LocationStep;
-import road.RoadType;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.rmi.NotBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.text.DecimalFormat;
 import java.util.Calendar;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 
 public class BackupObstacleDetector {
@@ -27,7 +24,8 @@ public class BackupObstacleDetector {
     public void initialize() throws IOException, NotBoundException {
         registry = LocateRegistry.getRegistry();
         receiverStubProgram = (IController) registry.lookup("IController");
-        senderQueueReference = RoadStatusReceiver.getSenderLiveQueue();
+        receiverStubProgram.addProcessName("BackupSender");
+        receiverStubProgram.setActiveProcessToBackupSender();
     }
 
     final String SHARED_FILE = "."+ File.separator +"src"
@@ -40,38 +38,28 @@ public class BackupObstacleDetector {
     }
 
     public void sendHeartBeat(int location) throws IOException{
-        LocationStep current_location = new LocationStep(toRoadType(location), Calendar.getInstance().getTime().getSeconds());
+        Random random = new Random();
         while(true){
             try {
-                // read status after sending a heartbeat signal.
                 long currentTime = Calendar.getInstance().getTime().getTime();
+                RoadStatusReceiver.previousHeartBeatTimeStamp = currentTime;
                 appendData(SHARED_FILE, location);
                 System.out.println("Detector (BackupSender): I am alive on step: " + (location++) + " at: " + currentTime);
+                int threadSleep = random.ints(3000, 5000)
+                        .findFirst()
+                        .getAsInt();
+
+                System.out.println("Thread Sleep: " + threadSleep);
+                if (threadSleep > 4000)
+                    break;
+                Thread.sleep(threadSleep);
                 Thread.sleep(HEARTBEAT_INTERVAL);
-            }catch(InterruptedException ex){
+            } catch(InterruptedException ex){
                 System.out.println("BackupSender exception: " + ex.getMessage());
                 System.out.println("------KILLED BACKUP SENDER------");
             }
         }
-    }
-
-
-    private static LocationStep getStep(int location){
-        DecimalFormat df = new DecimalFormat("##.00");
-        location +=1;
-        long timeInSeconds = Calendar.getInstance().getTime().getTime();
-        return new LocationStep(toRoadType(location), timeInSeconds);
-    }
-
-    private static RoadType toRoadType(int location) {
-        if (location == 0) {
-            return RoadType.NORMAL_ROAD;
-        } else if (location == 1) {
-            return RoadType.WATER_SPLASH;
-        } else if (location == 2) {
-            return RoadType.POT_HOLE;
-        }
-        return RoadType.INVALID_READ;
+        receiverStubProgram.removeProcessName("BackupSender");
     }
 
     public static void main(String [] args){

@@ -1,81 +1,49 @@
 
 
-Detector component failed on : 2022-10-01 21-05-32
+Detector component failed on : 2022-10-12 18-38-38
 
-Detector component failed on : 2022-10-01 21-05-39
+Detector component failed on : 2022-10-12 18-38-45
 
-Detector component failed on : 2022-10-01 21-05-46
+Detector component failed on : 2022-10-12 18-59-24
 
-Detector component failed on : 2022-10-01 21-10-00
+Detector component failed on : 2022-10-12 19-16-08
 
-Detector component failed on : 2022-10-01 21-10-07
+Detector component failed on : 2022-10-12 19-16-15
 
-Detector component failed on : 2022-10-01 21-36-12
+Detector component failed on : 2022-10-12 19-19-49
 
-Detector component failed on : 2022-10-01 21-36-19
+Detector component failed on : 2022-10-12 19-19-56
 
-Detector component failed on : 2022-10-01 21-48-09
+Detector component failed on : 2022-10-12 19-47-15
 
-Detector component failed on : 2022-10-01 21-49-48
+Detector component failed on : 2022-10-12 19-48-39
 
-Detector component failed on : 2022-10-01 21-52-20
+Initial Sender component failed on : 2022-10-13 02-33-49
 
-Detector component failed on : 2022-10-01 21-54-20
+Initial Sender component failed on : 2022-10-13 02-33-56
 
-Detector component failed on : 2022-10-01 21-54-27
+Initial Sender component failed on : 2022-10-13 02-44-52
 
-Detector component failed on : 2022-10-01 21-55-28
+Initial Sender component failed on : 2022-10-13 02-51-41
 
-Detector component failed on : 2022-10-01 21-55-35
+Initial Sender component failed on : 2022-10-13 02-51-48
 
-Detector component failed on : 2022-10-01 21-58-04
+Initial Sender component failed on : 2022-10-13 02-51-55
 
-Detector component failed on : 2022-10-01 21-58-11
+Initial Sender component failed on : 2022-10-13 02-54-26
 
-Detector component failed on : 2022-10-01 21-58-18
+Initial Sender component failed on : 2022-10-13 02-54-33
 
-Detector component failed on : 2022-10-01 21-58-25
+Initial Sender component failed on : 2022-10-13 02-54-40
 
-Detector component failed on : 2022-10-02 15-31-55
+Initial Sender component failed on : 2022-10-13 02-55-57
 
-Detector component failed on : 2022-10-02 15-32-02
+Initial Sender component failed on : 2022-10-13 02-56-04
 
-Detector component failed on : 2022-10-02 15-32-09
+Initial Sender component failed on : 2022-10-13 02-56-19
 
-Detector component failed on : 2022-10-02 15-32-16
+Initial Sender component failed on : 2022-10-13 02-56-26
 
-Detector component failed on : 2022-10-02 15-32-23
+Initial Sender component failed on : 2022-10-13 03-26-29
 
-Detector component failed on : 2022-10-02 16-10-46
-
-Detector component failed on : 2022-10-02 20-15-44
-
-Detector component failed on : 2022-10-02 20-15-51
-
-Detector component failed on : 2022-10-02 20-15-58
-
-Detector component failed on : 2022-10-02 20-16-05
-
-Detector component failed on : 2022-10-02 21-59-21
-
-Detector component failed on : 2022-10-02 22-04-26
-
-Detector component failed on : 2022-10-02 22-04-33
-
-Detector component failed on : 2022-10-02 22-05-44
-
-Detector component failed on : 2022-10-02 22-05-51
-
-Detector component failed on : 2022-10-02 22-08-37
-
-Detector component failed on : 2022-10-02 22-08-44
-
-Detector component failed on : 2022-10-04 18-50-19
-
-Detector component failed on : 2022-10-04 18-50-26
-
-Detector component failed on : 2022-10-04 18-50-33
-
-Detector component failed on : 2022-10-04 18-53-10
-
-Detector component failed on : 2022-10-04 18-53-17
+Initial Sender component failed on : 2022-10-13 03-26-36
