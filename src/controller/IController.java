@@ -27,11 +27,6 @@ public interface IController extends Remote {
      */
     void monitorDetectorModule() throws RemoteException;
 
-
-
-    boolean addProcessBuilders(ProcessBuilder processBuilder) throws RemoteException;
-    boolean addProcessToProcesses(Process process) throws RemoteException;
-    boolean cleanProcessQueues() throws RemoteException;
     boolean addProcessName(String processName) throws RemoteException;
 
     boolean removeProcessName(String processName) throws RemoteException;

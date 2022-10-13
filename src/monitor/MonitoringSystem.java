@@ -44,8 +44,7 @@ public class MonitoringSystem {
         IController receiverStubProgram = null;
         String active = "";
         try {
-            System.out.println("Active Process: " + failedReceiver.getActiveProcess());
-            System.out.println("Process names: " + failedReceiver.getProcessesSet());
+            System.out.println("Failed Process: " + failedReceiver.getActiveProcess());
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -85,7 +84,7 @@ public class MonitoringSystem {
             ProcessBuilder backupsender_builder = new ProcessBuilder("java", "-cp",
                     helper + File.separator + "out"+ File.separator +"production" + File.separator +"assignment-1"
                             + File.separator,
-                    "detectors.BackupObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)));
+                    "detectors.BackupObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)+1));
             backupsender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             Process backupSenderProcess;
             try {
@@ -98,7 +97,7 @@ public class MonitoringSystem {
             ProcessBuilder sender_builder = new ProcessBuilder("java", "-cp",
                     helper + File.separator +"out" + File.separator +"production"
                             + File.separator +"assignment-1",
-                    "detectors.ObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)), "Sender1");
+                    "detectors.ObstacleDetector", String.valueOf(getSenderFailureStep(SHARED_FILE)+1), "Sender1");
             try {
                 sender_builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                 sender_builder.start();

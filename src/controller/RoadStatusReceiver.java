@@ -67,19 +67,16 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
     public char getActiveProcess() throws RemoteException {
         return activeProcess.charAt(0);
     }
-
-    @Override
     public boolean addProcessBuilders(ProcessBuilder processBuilder) throws RemoteException {
         processBuilders.addLast(processBuilder);
         return true;
     }
 
-    @Override
     public boolean addProcessToProcesses(Process process) throws RemoteException {
         processes.addLast(process);
         return true;
     }
-    @Override
+
     public boolean cleanProcessQueues() throws RemoteException {
         for (Process p: processes) {
             if (!p.isAlive()) {
@@ -122,6 +119,7 @@ public class RoadStatusReceiver extends UnicastRemoteObject implements IControll
         while (true) {
             try {
                 String line = readCharsFromFile(SHARED_FILE, FILE_POINTER);
+                System.out.println("Active Process: " + getProcessesSet());
                 if (!"".equals(line)) {
                     System.out.println("Read step: " +line);
                     FILE_POINTER+=1;

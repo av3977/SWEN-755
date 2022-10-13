@@ -2,16 +2,12 @@ package detectors;
 
 import controller.IController;
 import controller.RoadStatusReceiver;
-import road.LocationStep;
-import road.RoadType;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.rmi.NotBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.text.DecimalFormat;
 import java.util.Calendar;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
@@ -64,25 +60,6 @@ public class BackupObstacleDetector {
             }
         }
         receiverStubProgram.removeProcessName("BackupSender");
-    }
-
-
-    private static LocationStep getStep(int location){
-        DecimalFormat df = new DecimalFormat("##.00");
-        location +=1;
-        long timeInSeconds = Calendar.getInstance().getTime().getTime();
-        return new LocationStep(toRoadType(location), timeInSeconds);
-    }
-
-    private static RoadType toRoadType(int location) {
-        if (location == 0) {
-            return RoadType.NORMAL_ROAD;
-        } else if (location == 1) {
-            return RoadType.WATER_SPLASH;
-        } else if (location == 2) {
-            return RoadType.POT_HOLE;
-        }
-        return RoadType.INVALID_READ;
     }
 
     public static void main(String [] args){
