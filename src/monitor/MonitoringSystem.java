@@ -41,8 +41,6 @@ public class MonitoringSystem {
 
     // Handles faults and logs failures
     public static void handleFault(String component, RoadStatusReceiver failedReceiver, char process) throws RemoteException {
-        IController receiverStubProgram = null;
-        String active = "";
         try {
             System.out.println("Failed Process: " + failedReceiver.getActiveProcess());
         } catch (RemoteException e) {
@@ -50,7 +48,6 @@ public class MonitoringSystem {
         }
         File currentDirFile = new File("");
         String helper = currentDirFile.getAbsolutePath();
-        System.out.println("FaultMonitor: Sender failed");
         // Log failure
         FileWriter fw = null;
         try

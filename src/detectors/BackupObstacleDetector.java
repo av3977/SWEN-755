@@ -49,7 +49,6 @@ public class BackupObstacleDetector {
                         .findFirst()
                         .getAsInt();
 
-                System.out.println("Thread Sleep: " + threadSleep);
                 if (threadSleep > 4000)
                     break;
                 Thread.sleep(threadSleep);

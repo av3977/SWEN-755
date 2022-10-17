@@ -116,7 +116,6 @@ public class ObstacleDetector {
                 int threadSleep = random.ints(2000, 5000)
                         .findFirst()
                         .getAsInt();
-                System.out.println("Thread Sleep: " + threadSleep);
                 if (threadSleep > 4000)
                     break;
                 Thread.sleep(threadSleep);
